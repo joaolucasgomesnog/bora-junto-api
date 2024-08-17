@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  sender_id   String
+  receiver_id String
+  created_at  DateTime @default(now())
+  content     String   @db.VarChar(255)
+  status      Int
+
+  sender   User @relation("SentMessages", fields: [sender_id], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+
+  // @@unique([sender_id, receiver_id])
+  @@map("message")
+}
+
+model UserCategory {
+  id          Int    @id @default(autoincrement())
+  description String @db.VarChar(255)
+
+  user User[]
+
+  @@map("user_category")
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  User       User     @relation(fields: [userId], references: [id])
+  description String   @db.VarChar()
+  created_at  DateTime @default(now())
+  media_url   String?   @db.VarChar(255)
+
+  comment  Comment[]
+  like     Like[]
+  favorite Favorite[]
+  userId   String
+
+  @@map("post")
+}
+
+model User {
+  // id               Int      @id @default(autoincrement())
+  id               String    @id @unique
+  username         String    @unique
+  name             String
+  user_category_id Int
+  description      String?
+  profile_pic_url  String?
+  phone            String    @unique
+  email            String    @unique
+  birth_date       DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  location_id      Int
+
+  user_category    UserCategory  @relation(fields: [user_category_id], references: [id])
+  current_local_id Location      @relation(fields: [location_id], references: [id])
+  following        Following[]   @relation("Following")
+  follower         Following[]   @relation("Follower")
+  comment          Comment[]
+  like             Like[]
+  favorite         Favorite[]
+  event            Event[]
+  goal             Goal[]
+  sentMessages     Message[]     @relation("SentMessages")
+  receiveMessages  Message[]     @relation("ReceivedMessages")
+  Participant      Participant[]
+  contact          User[]        @relation("UserContacts")
+  User             User[]        @relation("UserContacts")
+  Post             Post[]
+
+  @@map("user")
+}
+
+model Participant {
+  event_id Int
+  user_id  String
+
+  event Event @relation(fields: [event_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+
+  @@id([event_id, user_id])
+  @@map("participant")
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String?  @db.VarChar(255)
+  event_date  DateTime
+  created_at  DateTime @default(now())
+  user_id     String
+  location_id Int?
+  privacy_id  Int
+  category_id Int?
+
+  user          User           @relation(fields: [user_id], references: [id])
+  location      Location?      @relation(fields: [location_id], references: [id])
+  privacy       Privacy        @relation(fields: [privacy_id], references: [id])
+  eventCategory EventCategory? @relation(fields: [category_id], references: [id])
+  Participant   Participant[]
+
+  @@map("event")
+}
+
+model Following {
+  id           Int    @id @default(autoincrement())
+  follower_id  String
+  following_id String
+
+  follower  User @relation("Follower", fields: [follower_id], references: [id])
+  following User @relation("Following", fields: [following_id], references: [id])
+
+  @@unique([follower_id, following_id])
+  @@map("following")
+}
+
+model Comment {
+  id          Int      @id @default(autoincrement())
+  description String   @db.VarChar(255)
+  user_id     String
+  post_id     String
+  created_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+  post Post @relation(fields: [post_id], references: [id])
+
+  @@map("comment")
+}
+
+model Like {
+  id      Int    @id @default(autoincrement())
+  user_id String
+  post_id String
+
+  user User @relation(fields: [user_id], references: [id])
+  post Post @relation(fields: [post_id], references: [id])
+
+  @@map("like")
+}
+
+model Favorite {
+  id      Int    @id @default(autoincrement())
+  user_id String
+  post_id String
+
+  user User @relation(fields: [user_id], references: [id])
+  post Post @relation(fields: [post_id], references: [id])
+
+  @@map("favorite")
+}
+
+model EventCategory {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String? @db.VarChar(255)
+  Event       Event[]
+
+  @@map("event_category")
+}
+
+model Privacy {
+  id          Int     @id @default(autoincrement())
+  description String
+  event       Event[]
+
+  @@map("privacy")
+}
+
+model Location {
+  id                Int     @id @default(autoincrement())
+  address           String?
+  accuracy          Float?
+  altitude          Float?
+  altitude_accuracy Float?
+  heading           Float?
+  latitude          Float
+  longitude         Float
+  speed             Float?
+
+  user  User[]
+  event Event[]
+
+  @@map("location")
+}
+
+model Goal {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+  user_id     String
+  status      Boolean @default(false)
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("goal")
+}
