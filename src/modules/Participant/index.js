@@ -85,8 +85,50 @@ export default {
       console.error("Error while checking participant", error);
       res.status(500).json({ error: "Error while checking participant" });
     }
+  },
+  
+
+  async deleteParticipantById(req, res) {
+    const { user_id, event_id } = req.body;
+  
+    console.log("TESTE", user_id, event_id);
+    try {
+      const user_exists = await prisma.user.findUnique({
+        where: { id: user_id },
+      });
+  
+      const event_exists = await prisma.event.findUnique({
+        where: { id: Number(event_id) },
+      });
+      
+      if (!event_exists || !user_exists) {
+        res.status(404).json({ error: "Event or User not found" });
+        console.log("Event or User not found");
+        return;
+      }
+  
+  
+      const participant_deleted = await prisma.participant.delete({
+        where: {
+          event_id_user_id: {
+            event_id: Number(event_id),
+            user_id: user_id,
+          },
+        },
+      });
+  
+      if (participant_deleted) {
+        console.log("Participant deleted");
+        res.json({ participant_deleted: true });
+        return;
+      }
+  
+      res.json({ participant_deleted: false });
+    } catch (error) {
+      console.error("Error while deleting participant", error);
+      res.status(500).json({ error: "Error while deleting participant" });
+    }
   }
   
-  
-  
 };
+

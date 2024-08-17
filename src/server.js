@@ -27,7 +27,7 @@ app.use(cors({
 app.use(routes);
 
 app.get("/", (req, res) => {
-    return res.json({ status: 'FUNCIONOU HEHEHE' });
+    return res.json({ hello: 'world' });
 });
 
 // Use server.listen instead of app.listen to bind the server
