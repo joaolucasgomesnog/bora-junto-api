@@ -1,5 +1,5 @@
 
-import Event from "../Modules/Event/index.js"
+import Event from "../modules/Event/index.js"
 import { Router } from "express";
 
 const eventRoutes = Router();
