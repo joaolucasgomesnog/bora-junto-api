@@ -192,11 +192,12 @@ export default {
             select: {
               name: true,
               profile_pic_url: true,
-              _count: {
-                select: {
-                  Participant: true
-                }
-              }
+              
+            }
+          },
+          _count: {
+            select: {
+              Participant: true
             }
           }
         },
@@ -218,8 +219,6 @@ export default {
   async findAllEventsByDate(req, res) {
     const { date } = req.params;
     const user_id  = req.query.user_id;
-
-    console.log("USUARIO",user_id)
 
     // Parse the date string to create a Date object
     const dateObj = new Date(date);
