@@ -245,8 +245,21 @@ export default {
 
         },
         include:{
-          location:true
-        }
+          location:true,
+          user: {
+            select: {
+              name: true,
+              profile_pic_url: true,
+              
+            }
+          },
+          _count: {
+            select: {
+              Participant: true
+            }
+          }
+        },
+        
       });
 
       const participantEvents = await prisma.participant.findMany({
@@ -263,9 +276,22 @@ export default {
           event: {
             include: {
               location: true,
-              user: {select:{username:true,name:true,profile_pic_url:true}}
+              user: {
+                select:{
+                  username:true,
+                  name:true,
+                  profile_pic_url:true
+                }
+              },
+              _count: {
+                select: {
+                  Participant: true
+                }
+              }
+
             },
           },
+
         },
       });
   
