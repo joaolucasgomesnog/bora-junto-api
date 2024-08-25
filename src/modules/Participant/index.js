@@ -37,7 +37,7 @@ export default {
       })
       res.json(participant);
     } catch (error) {
-      console.error("Erro while deleting event", error);
+      console.error("Erro while creating participant", error);
       res.status(500).json({ error: "Erro while creating a new participant" });
       
     }

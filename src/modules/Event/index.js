@@ -2,6 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 
 export default {
   async createEvent(req, res) {
+    let event_id = 0
     const {
       title,
       description,
@@ -46,9 +47,23 @@ export default {
         },
       });
       res.json(event);
+      event_id = event.id
     } catch (error) {
       console.error("Erro while creating event", error);
       res.status(500).json({ error: "Erro while creating event" });
+    }
+    try {
+      const participant = await prisma.participant.create({
+        data: {
+          event_id,
+          user_id
+        },
+      })
+      res.json(participant);
+    } catch (error) {
+      console.error("Erro while creating participant", error);
+      res.status(500).json({ error: "Erro while creating a new participant" });
+      
     }
   },
   async deleteEvent(req, res) {
