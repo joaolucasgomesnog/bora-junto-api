@@ -285,6 +285,9 @@ export default {
               gte: startOfDay,
               lte: endOfDay,
             },
+            user_id: {
+              not: user_id
+            }
           },
         },
         include: {
