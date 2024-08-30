@@ -157,24 +157,41 @@ export default {
     }
   },
 
-  async findUserByUserName(req, res) {
+  async findUserByUsername(req, res){
     try {
-      const { username } = req.params;
-      const users = await prisma.$queryRaw`
-            SELECT * FROM "User"
-            WHERE LOWER("username") LIKE ${`%${username.toLowerCase()}%`}            
-        `;
-
-      if (!users || users.length === 0) {
-        return res.json({ error: "User does not exist" });
+      const {username} = req.params
+      const user = await prisma.user.findUnique({
+        where: {
+          username
+          
+        }
+      })
+      if(!user){
+        return res.status(500).json(null)
       }
-
-      return res.json(users);
+      return res.json(user)
     } catch (error) {
-      console.error("Error while searching for users.", error);
-      return res
-        .status(500)
-        .json({ error: "Error while searching for users." });
+      console.log("Error while getting user")
+      return res.status(500).json("Error while getting user")
+    }
+  },
+
+  async findUserByEmail(req, res){
+    try {
+      const {email} = req.params
+      const user = await prisma.user.findUnique({
+        where: {
+          email
+          
+        }
+      })
+      if(!user){
+        return res.status(500).json(null)
+      }
+      return res.json(user)
+    } catch (error) {
+      console.log("Error while getting user")
+      return res.status(500).json("Error while getting user")
     }
   },
 
