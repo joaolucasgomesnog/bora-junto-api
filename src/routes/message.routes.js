@@ -6,6 +6,7 @@ const messageRoutes = Router();
 
 messageRoutes.post("/:id", Message.createMessage)
 messageRoutes.get("/list/:id", Message.getAllMessagesByUser)
+messageRoutes.get("/last/:id", Message.fetchLastMessageWithSenderFlag)
 
 // messageRoutes.put("/:id", Goal.updateGoal)
 // messageRoutes.delete("/:id", Goal.deleteGoalById)
