@@ -5,6 +5,7 @@ import { Router } from "express";
 const userRoutes = Router();
 
 userRoutes.post("/", user.createUser)
+userRoutes.post("/check", user.checkUserAlreadyExists)
 userRoutes.get("/list", user.findAllUsers)
 userRoutes.get("/list/filter", user.filterAllUsers)
 // userRoutes.get("/list/id", user.fidUserIdByEmail)

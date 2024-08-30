@@ -45,6 +45,42 @@ export default {
     }
   },
 
+  async checkUserAlreadyExists(req, res) {
+    const { username, email, phone } = req.body;
+
+    try {
+      const results = {
+        username: false,
+        email: false,
+        phone: false,
+      };
+      const userWithUsername = await prisma.user.findUnique({
+        where: { username },
+      });
+      if (userWithUsername) {
+        results.username = true;
+      }
+
+      const userWithEmail = await prisma.user.findUnique({ where: { email } });
+      if (userWithEmail) {
+        results.email = true;
+      }
+
+      const userWithPhone = await prisma.user.findUnique({ where: { phone } });
+      if (userWithPhone) {
+        results.phone = true;
+      }
+
+      res.status(200).json(results);
+    } catch (error) {
+      console.error("Error checking user existence:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  },
+
   async getContactListByUserId(req, res) {
     const { user_id } = req.params;
     console.log("ID", user_id);
@@ -148,7 +184,7 @@ export default {
         include: { user_category: true },
       });
       if (!user) {
-        console.log("nao encontrado")
+        console.log("nao encontrado");
         return res.json({ error: "User does not exist" });
       }
       return res.json(user);
@@ -157,41 +193,39 @@ export default {
     }
   },
 
-  async findUserByUsername(req, res){
+  async findUserByUsername(req, res) {
     try {
-      const {username} = req.params
+      const { username } = req.params;
       const user = await prisma.user.findUnique({
         where: {
-          username
-          
-        }
-      })
-      if(!user){
-        return res.status(500).json(null)
+          username,
+        },
+      });
+      if (!user) {
+        return res.status(500).json(null);
       }
-      return res.json(user)
+      return res.json(user);
     } catch (error) {
-      console.log("Error while getting user")
-      return res.status(500).json("Error while getting user")
+      console.log("Error while getting user");
+      return res.status(500).json("Error while getting user");
     }
   },
 
-  async findUserByEmail(req, res){
+  async findUserByEmail(req, res) {
     try {
-      const {email} = req.params
+      const { email } = req.params;
       const user = await prisma.user.findUnique({
         where: {
-          email
-          
-        }
-      })
-      if(!user){
-        return res.status(500).json(null)
+          email,
+        },
+      });
+      if (!user) {
+        return res.status(500).json(null);
       }
-      return res.json(user)
+      return res.json(user);
     } catch (error) {
-      console.log("Error while getting user")
-      return res.status(500).json("Error while getting user")
+      console.log("Error while getting user");
+      return res.status(500).json("Error while getting user");
     }
   },
 
