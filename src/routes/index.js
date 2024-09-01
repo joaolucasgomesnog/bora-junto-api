@@ -5,7 +5,8 @@ import { commentRoutes } from './comment.routes.js';
 import { goalRoutes } from './goal.routes.js';
 import { messageRoutes } from './message.routes.js';
 import { eventRoutes } from './event.routes.js';
-import { participantRoutes } from './participant.routes.js';
+import { eventParticipantRoutes } from './eventparticipant.routes.js';
+import { challengeParticipantRoutes } from './challengeparticipant.routes.js';
 
 const routes = express()
 
@@ -15,6 +16,7 @@ routes.use('/comment', commentRoutes)
 routes.use('/goal', goalRoutes)
 routes.use('/message', messageRoutes)
 routes.use('/event', eventRoutes)
-routes.use('/participant', participantRoutes)
+routes.use('/eventparticipant', eventParticipantRoutes)
+routes.use('/challengeparticipant', challengeParticipantRoutes)
 
 export {routes}

@@ -53,7 +53,7 @@ export default {
       res.status(500).json({ error: "Erro while creating event" });
     }
     try {
-      const participant = await prisma.participant.create({
+      const participant = await prisma.eventParticipant.create({
         data: {
           event_id,
           user_id
@@ -212,7 +212,7 @@ export default {
           },
           _count: {
             select: {
-              Participant: true
+              EventParticipant: true
             }
           }
         },
@@ -270,14 +270,14 @@ export default {
           },
           _count: {
             select: {
-              Participant: true
+              EventParticipant: true
             }
           }
         },
         
       });
 
-      const participantEvents = await prisma.participant.findMany({
+      const participantEvents = await prisma.eventParticipant.findMany({
         where: {
           user_id,
           event: {
@@ -303,7 +303,7 @@ export default {
               },
               _count: {
                 select: {
-                  Participant: true
+                  EventParticipant: true
                 }
               }
 
