@@ -1,5 +1,5 @@
 
-import Participant from "../modules/Participant/index.js";
+import Participant from "../modules/EventParticipant/index.js";
 import { Router } from "express";
 
 const participantRoutes = Router();

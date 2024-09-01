@@ -39,10 +39,10 @@ model UserCategory {
 
 model Post {
   id          String   @id @default(uuid())
-  User       User     @relation(fields: [userId], references: [id])
+  User        User     @relation(fields: [userId], references: [id])
   description String   @db.VarChar()
   created_at  DateTime @default(now())
-  media_url   String?   @db.VarChar(255)
+  media_url   String?  @db.VarChar(255)
 
   comment  Comment[]
   like     Like[]
@@ -78,23 +78,34 @@ model User {
   goal             Goal[]
   sentMessages     Message[]     @relation("SentMessages")
   receiveMessages  Message[]     @relation("ReceivedMessages")
-  Participant      Participant[]
+  EventParticipant EventParticipant[]
+  ChallengeParticipant ChallengeParticipant[]
   contact          User[]        @relation("UserContacts")
   User             User[]        @relation("UserContacts")
   Post             Post[]
+  Challenge        Challenge[]
 
   @@map("user")
 }
 
-model Participant {
+model EventParticipant {
   event_id Int
   user_id  String
 
-  event Event @relation(fields: [event_id], references: [id])
-  user  User  @relation(fields: [user_id], references: [id])
-
+  event       Event      @relation(fields: [event_id], references: [id])
+  user        User       @relation(fields: [user_id], references: [id])
   @@id([event_id, user_id])
-  @@map("participant")
+  @@map("event_participant")
+}
+
+model ChallengeParticipant {
+  challenge_id Int
+  user_id  String
+
+  challenge   Challenge      @relation(fields: [challenge_id], references: [id])
+  user        User       @relation(fields: [user_id], references: [id])
+  @@id([challenge_id, user_id])
+  @@map("challenge_participant")
 }
 
 model Event {
@@ -112,9 +123,25 @@ model Event {
   location      Location?      @relation(fields: [location_id], references: [id])
   privacy       Privacy        @relation(fields: [privacy_id], references: [id])
   eventCategory EventCategory? @relation(fields: [category_id], references: [id])
-  Participant   Participant[]
+  EventParticipant   EventParticipant[]
 
   @@map("event")
+}
+
+model Challenge {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(255)
+  description  String?  @db.VarChar(255)
+  initial_date DateTime
+  final_date   DateTime
+  created_at   DateTime @default(now())
+  user_id      String
+  category_id  Int?
+  user              User           @relation(fields: [user_id], references: [id])
+  challengeCategory EventCategory? @relation(fields: [category_id], references: [id])
+  ChallengeParticipant   ChallengeParticipant[]
+
+  @@map("challenge")
 }
 
 model Following {
@@ -165,10 +192,11 @@ model Favorite {
 }
 
 model EventCategory {
-  id          Int     @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String
-  description String? @db.VarChar(255)
+  description String?     @db.VarChar(255)
   Event       Event[]
+  Challenge   Challenge[]
 
   @@map("event_category")
 }
