@@ -7,6 +7,7 @@ export default {
       user_id,
       title,
       description,
+      pic_url,
       initial_date,
       final_date,
       category_id
@@ -19,6 +20,7 @@ export default {
           description,
           initial_date,
           final_date,
+          pic_url,
           user: {
             connect: {
               id: user_id,
@@ -81,6 +83,7 @@ export default {
     const {
       title,
       description,
+      pic_url,
       initial_date,
       final_date,
       category_id
@@ -101,6 +104,7 @@ export default {
         data: {
           title,
           description,
+          pic_url,
           initial_date,
           final_date,
           user: {
