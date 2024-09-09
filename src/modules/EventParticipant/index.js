@@ -84,7 +84,49 @@ export default {
       res.status(500).json({ error: "Error while checking participant" });
     }
   },
+  async getParticipantsByEventId(req, res) {
+    const { event_id } = req.params;
+    const eventId = Number(event_id);
+    console.log("TESTE", event_id);
+    try {
+
+      const event_exists = await prisma.event.findUnique({
+        where: { id: Number(event_id) },
+      });
+      
+      if (!event_exists) {
+        res.status(404).json({ error: "Event not found" });
+        console.log("Event not found");
+        return;
+      }
   
+  
+      const participants = await prisma.eventParticipant.findMany({
+        where: {
+          event_id: eventId
+        },
+        include:{
+          user:{
+            select:{
+              name:true,
+              username:true,
+              profile_pic_url:true
+            }
+          }
+        }
+      });
+  
+      if (participants) {
+        res.json(participants);
+        return;
+      }
+  
+      res.json('erro');
+    } catch (error) {
+      console.error("Error while checking participants", error);
+      res.status(500).json({ error: "Error while checking participants" });
+    }
+  },
 
   async deleteParticipantById(req, res) {
     const { user_id, event_id } = req.body;
