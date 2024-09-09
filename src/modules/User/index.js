@@ -236,6 +236,7 @@ export default {
       const {
         name,
         username,
+        profile_pic_url,
         user_category,
         phone,
         email,
@@ -251,6 +252,7 @@ export default {
         data: {
           name,
           username,
+          profile_pic_url,
           email,
           phone,
           birth_date,
