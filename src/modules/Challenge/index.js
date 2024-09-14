@@ -149,7 +149,12 @@ export default {
 
       const participantChallenges = await prisma.challengeParticipant.findMany({
         where: {
-          user_id: id
+          user_id: id,
+          challenge:{
+            user_id: {
+              not: id
+            }
+          }
         },
         include: {
           challenge: {
