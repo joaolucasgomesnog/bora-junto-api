@@ -7,12 +7,14 @@ export default {
       user_id,
       description,
       challenge_id,
-      pic_url } = req.body;
+      pic_url,
+      created_at } = req.body;
     console.log("TESTE", user_id)
     try {
       const checkIn = await prisma.checkIn.create({
         data: {
           description,
+          created_at,
           pic_url,
           user: {
             connect: {

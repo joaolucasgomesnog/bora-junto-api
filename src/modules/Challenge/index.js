@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 
 export default {
   async createChallenge(req, res) {
-    let challenge_id = 0
+    let challenge_id = 0;
     const {
       user_id,
       title,
@@ -10,9 +10,9 @@ export default {
       pic_url,
       initial_date,
       final_date,
-      category_id
+      category_id,
     } = req.body;
-    console.log("TESTE",user_id)
+    console.log("TESTE", user_id);
     try {
       const challenge = await prisma.challenge.create({
         data: {
@@ -29,12 +29,12 @@ export default {
           challengeCategory: {
             connect: {
               id: category_id,
-            }
-          }
+            },
           },
+        },
       });
       res.json(challenge);
-      challenge_id = challenge.id
+      challenge_id = challenge.id;
     } catch (error) {
       console.error("Erro while creating challenge", error);
       res.status(500).json({ error: "Erro while creating challenge" });
@@ -50,13 +50,15 @@ export default {
     // } catch (error) {
     //   console.error("Erro while creating participant", error);
     //   res.status(500).json({ error: "Erro while creating a new participant" });
-      
+
     // }
   },
   async deleteChallenge(req, res) {
     const { id } = req.params;
     const challenge_id = parseInt(id);
-    const challenge_exists = await prisma.challenge.findMany({ where: { id: challenge_id } });
+    const challenge_exists = await prisma.challenge.findMany({
+      where: { id: challenge_id },
+    });
     if (!challenge_exists) {
       res.status(500).json({ erro: "Challenge not found" });
     }
@@ -73,7 +75,6 @@ export default {
     }
   },
 
-
   async updateChallenge(req, res) {
     console.log(" UPDATE");
     const { id } = req.params;
@@ -86,7 +87,7 @@ export default {
       pic_url,
       initial_date,
       final_date,
-      category_id
+      category_id,
     } = req.body;
 
     const challenge_exists = await prisma.challenge.findUnique({
@@ -116,7 +117,7 @@ export default {
             connect: {
               id: category_id,
             },
-          }
+          },
         },
       });
       res.json(updated_challenge);
@@ -129,7 +130,7 @@ export default {
     try {
       const { id } = req.params;
       const challenge = await prisma.challenge.findUnique({
-        where: { id: Number(id)},
+        where: { id: Number(id) },
       });
       if (!challenge) return res.json({ error: "Challenge does not exist" });
       return res.json(challenge);
@@ -140,11 +141,38 @@ export default {
   async findAllChallengesByUser(req, res) {
     try {
       const { id } = req.params;
-      const challenge = await prisma.challenge.findMany({
-        where: { user_id: id }
+      console.log("jjjjjjjjjjjjj", id)
+
+      const challenges = await prisma.challenge.findMany({
+        where: { user_id: id },
       });
-      if (!challenge) return res.json({ error: "Challenge does not exist" });
-      return res.json(challenge);
+
+      const participantChallenges = await prisma.challengeParticipant.findMany({
+        where: {
+          user_id: id
+        },
+        include: {
+          challenge: {
+            include: {
+              user: {
+                select: {
+                  name:true,
+                  username:true,
+                  profile_pic_url:true
+                }
+              }
+            }
+          }
+        }
+      })
+
+      const allChallenges = [
+        ...challenges,
+        ...participantChallenges.map(participant => participant.challenge)
+      ]
+      console.log(allChallenges, '------------------------------')
+      if (allChallenges.length === 0) return res.json({ error: "Challenges does not exist" });
+      return res.json(allChallenges);
     } catch (error) {
       return res.json({ error });
     }
@@ -155,7 +183,7 @@ export default {
       const { id } = req.params;
       const challenge = await prisma.challenge.findMany({
         where: {
-          privacy_id: Number(id)
+          privacy_id: Number(id),
         },
       });
       if (!challenge) return res.json({ error: "Challenge does not exist" });
@@ -167,7 +195,7 @@ export default {
 
   async findAllChallengesByDate(req, res) {
     const { date } = req.params;
-    const user_id  = req.query.user_id;
+    const user_id = req.query.user_id;
 
     // Parse the date string to create a Date object
     const dateObj = new Date(date);
@@ -191,24 +219,21 @@ export default {
             gte: startOfDay,
             lte: endOfDay,
           },
-
         },
-        include:{
-          location:true,
+        include: {
+          location: true,
           user: {
             select: {
               name: true,
               profile_pic_url: true,
-              
-            }
+            },
           },
           _count: {
             select: {
-              Participant: true
-            }
-          }
+              Participant: true,
+            },
+          },
         },
-        
       });
 
       const participantChallenges = await prisma.challengeParticipant.findMany({
@@ -220,8 +245,8 @@ export default {
               lte: endOfDay,
             },
             user_id: {
-              not: user_id
-            }
+              not: user_id,
+            },
           },
         },
         include: {
@@ -229,28 +254,26 @@ export default {
             include: {
               location: true,
               user: {
-                select:{
-                  username:true,
-                  name:true,
-                  profile_pic_url:true
-                }
+                select: {
+                  username: true,
+                  name: true,
+                  profile_pic_url: true,
+                },
               },
               _count: {
                 select: {
-                  Participant: true
-                }
-              }
-
+                  Participant: true,
+                },
+              },
             },
           },
-
         },
       });
-  
+
       // Combine both sets of challenges
       const allChallenges = [
         ...challenges,
-        ...participantChallenges.map(participant => participant.challenge),
+        ...participantChallenges.map((participant) => participant.challenge),
       ];
 
       if (!allChallenges || allChallenges.length === 0) {
@@ -259,8 +282,8 @@ export default {
 
       return res.json(allChallenges);
     } catch (error) {
-      console.log('Error while processing challenges')
+      console.log("Error while processing challenges");
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 };

@@ -59,7 +59,7 @@ export default {
           user_id
         },
       })
-      res.json(participant);
+      console.log(participant);
     } catch (error) {
       console.error("Erro while creating participant", error);
       res.status(500).json({ error: "Erro while creating a new participant" });
