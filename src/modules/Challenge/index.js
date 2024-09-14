@@ -39,19 +39,16 @@ export default {
       console.error("Erro while creating challenge", error);
       res.status(500).json({ error: "Erro while creating challenge" });
     }
-    // try {
-    //   const participant = await prisma.challengeParticipant.create({
-    //     data: {
-    //       challenge_id,
-    //       user_id
-    //     },
-    //   })
-    //   res.status(201).json(participant);
-    // } catch (error) {
-    //   console.error("Erro while creating participant", error);
-    //   res.status(500).json({ error: "Erro while creating a new participant" });
-
-    // }
+     try {
+       const participant = await prisma.challengeParticipant.create({
+         data: {
+           challenge_id,
+           user_id
+         },
+       })
+     } catch (error) {
+       console.error("Erro while creating participant", error);
+     }
   },
   async deleteChallenge(req, res) {
     const { id } = req.params;
