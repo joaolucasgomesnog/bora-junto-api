@@ -85,27 +85,72 @@ export default {
     const { user_id } = req.params;
     console.log("ID", user_id);
     try {
+      // Fetch the user along with their contacts and the most recent messages
       const user = await prisma.user.findUnique({
         where: {
           id: user_id,
         },
         include: {
-          contact: true,
+          contact: {
+            include: {
+              // Include the most recent message sent or received with each contact
+              sentMessages: {
+                where: {
+                  receiver_id: user_id,
+                },
+                orderBy: {
+                  created_at: 'desc',
+                },
+                take: 1,
+              },
+              receiveMessages: {
+                where: {
+                  sender_id: user_id,
+                },
+                orderBy: {
+                  created_at: 'desc',
+                },
+                take: 1,
+              },
+            },
+          },
           user_category: true,
         },
       });
-
+  
       if (!user) {
-        console.error("user not found");
+        console.error("User not found");
         return res.status(404).json({ error: "User not found" });
       }
-
-      res.json(user.contact);
+  
+      // Flatten the messages and find the latest message for each contact
+      const contactsWithMessages = user.contact.map(contact => {
+        const sentMessage = contact.sentMessages[0] || { created_at: new Date(0) }; // Default to far past date if no message
+        const receivedMessage = contact.receiveMessages[0] || { created_at: new Date(0) };
+        
+        // Use the latest message date for sorting
+        const latestMessageDate = sentMessage.created_at > receivedMessage.created_at ? sentMessage.created_at : receivedMessage.created_at;
+        
+        return {
+          ...contact,
+          latestMessageDate,
+        };
+      });
+  
+      // Sort contacts based on the latest message date
+      const sortedContacts = contactsWithMessages.sort((a, b) => b.latestMessageDate - a.latestMessageDate);
+  
+      console.log(sortedContacts)
+      res.json(sortedContacts);
     } catch (error) {
       console.error("Error while getting contacts:", error);
       res.status(500).json({ error: "Error while getting contacts" });
     }
   },
+  
+
+  
+
 
   async setContactToUser(req, res) {
     const { user_id } = req.params;
@@ -130,6 +175,19 @@ export default {
         data: {
           contact: {
             connect: { id: contact_id },
+          },
+        },
+        include: {
+          contact: true, // Inclui a lista atualizada de contatos na resposta
+          user_category: true,
+        },
+      });
+
+      await prisma.user.update({
+        where: { id: contact_id },
+        data: {
+          contact: {
+            connect: { id: user_id },
           },
         },
         include: {

@@ -57,6 +57,7 @@ io.on("connection", (socket) => {
             const messages = await Message.fetchAllMessagesByUser(sender_id, receiver_id);
             io.to(sender_id).emit('get_messages', messages);
             io.to(receiver_id).emit('get_messages', messages);
+            
         } catch (error) {
             console.error('Error fetching messages:', error);
             socket.emit('error', { message: 'Error fetching messages' });

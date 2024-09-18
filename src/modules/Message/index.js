@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js"
 
+
 export default {
     async createMessage(sender_id, receiver_id, content ){
         
@@ -18,6 +19,28 @@ export default {
             throw new Error('Error while creating messages');
         }
     },
+    async  viewMessages(user_id, receiver_id) {
+        try {
+            // Atualiza o status para 1 apenas para as mensagens enviadas pelo receiver
+            await prisma.message.updateMany({
+                where: {
+                    status: 0,
+                    sender_id: receiver_id, // Mensagens enviadas pelo receiver
+                    receiver_id: user_id // Recebidas pelo user_id
+                },
+                data: {
+                    status: 1
+                }
+            });
+            
+            return;
+        } catch (error) {
+            console.error('Erro while viewing messages', error);
+            throw new Error('Error while viewing messages');
+        }
+    },
+    
+
 
     async getAllMessagesByUser(req, res){
         const {id} = req.params
@@ -25,8 +48,11 @@ export default {
 
         console.log('receiver:',receiver_id)
         console.log('sender:',id)
+        
 
         try {
+            // await viewMessages(id, receiver_id)
+
             const messages = await prisma.message.findMany({
                 where: {
                     OR: [
@@ -44,7 +70,7 @@ export default {
                     created_at: 'desc' // or 'desc' for descending order
                 }
             });
-            console.log(messages)
+            // console.log(messages)
             return res.json(messages);
 
         } catch (error) {
@@ -108,7 +134,7 @@ export default {
           // Verifica se a última mensagem foi enviada pelo próprio usuário
           const isSentByUser = lastMessage ? lastMessage.sender_id === userId : false;
     
-          console.log("Last", lastMessage, isSentByUser)
+        //   console.log("Last", lastMessage, isSentByUser)
           return res.status(200).json({
             lastMessage,
             isSentByUser
