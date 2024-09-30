@@ -85,7 +85,8 @@ model User {
   Post                 Post[]
   Challenge            Challenge[]
   CheckIn              CheckIn[]
-
+  sender               Solicitation[]         @relation("Sender")
+  receiver             Solicitation[]         @relation("Receiver")
   @@map("user")
 }
 
@@ -127,6 +128,7 @@ model Event {
   privacy          Privacy            @relation(fields: [privacy_id], references: [id])
   eventCategory    EventCategory?     @relation(fields: [category_id], references: [id])
   EventParticipant EventParticipant[]
+  Solicitation     Solicitation[]
 
   @@map("event")
 }
@@ -145,6 +147,7 @@ model Challenge {
   challengeCategory    EventCategory?         @relation(fields: [category_id], references: [id])
   ChallengeParticipant ChallengeParticipant[]
   CheckIn              CheckIn[]
+  Solicitation         Solicitation[]
 
   @@map("challenge")
 }
@@ -167,8 +170,9 @@ model Following {
   follower_id  String
   following_id String
 
-  follower  User @relation("Follower", fields: [follower_id], references: [id])
-  following User @relation("Following", fields: [following_id], references: [id])
+  follower     User           @relation("Follower", fields: [follower_id], references: [id])
+  following    User           @relation("Following", fields: [following_id], references: [id])
+  Solicitation Solicitation[]
 
   @@unique([follower_id, following_id])
   @@map("following")
@@ -254,4 +258,30 @@ model Goal {
   user User @relation(fields: [user_id], references: [id])
 
   @@map("goal")
+}
+
+model Solicitation {
+  id           Int      @id @default(autoincrement())
+  sender_id    String // O ID do usuário que está enviando a solicitação
+  receiver_id  String // O ID do usuário que está recebendo a solicitação
+  challenge_id Int? // O ID do Challenge, se a solicitação for para um desafio
+  following_id Int?
+  event_id     Int? // O ID do Event, se a solicitação for para um evento
+  status       Status   @default(PENDING) // Status da solicitação
+  created_at   DateTime @default(now())
+
+  following Following? @relation(fields: [following_id], references: [id])
+  sender    User       @relation("Sender", fields: [sender_id], references: [id])
+  receiver  User       @relation("Receiver", fields: [receiver_id], references: [id])
+  challenge Challenge? @relation(fields: [challenge_id], references: [id])
+  event     Event?     @relation(fields: [event_id], references: [id])
+  userId    String?
+
+  @@map("solicitation")
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
