@@ -19,26 +19,20 @@ export default {
               id: sender_id,
             },
           },
-          receiver: {
+          receiver:{
             connect: {
               id: receiver_id,
-            },
+            }
           },
-          challenge: {
-            connect: {
-              id: challenge_id,
-            },
-          },
-          event: {
-            connect: {
-              id: event_id,
-            },
-          },
-          following: {
-            connect: {
-              id: following_id,
-            },
-          },
+          challenge: challenge_id ? { 
+            connect: { id: challenge_id } 
+          } : undefined, // Conectando ao challenge se o ID for fornecido
+          event: event_id ? { 
+            connect: { id: event_id } 
+          } : undefined, // Conectando ao event se o ID for fornecido
+          following: following_id ? { 
+            connect: { id: following_id } 
+          } : undefined, // Conectando ao following se o ID for fornecido
         },
       });
       res.json(solicitation);
@@ -88,7 +82,7 @@ export default {
       console.log("jjjjjjjjjjjjj", id)
 
       const solicitations = await prisma.solicitation.findMany({
-        where: { receiver_id: id },
+        where: { receiver_id: id, status:'PENDING'},
         include: {
           sender: {
             select: {
@@ -156,7 +150,7 @@ export default {
           participant = await prisma.challengeParticipant.create({
             data: {
               challenge_id: solicitation.challenge_id,
-              user_id
+              user_id: solicitation.receiver_id
             },
           });
         } catch (error) {
@@ -170,7 +164,7 @@ export default {
           participant = await prisma.eventParticipant.create({
             data: {
               event_id: solicitation.event_id,
-              user_id
+              user_id: solicitation.receiver_id
             },
           });
         } catch (error) {
@@ -181,7 +175,7 @@ export default {
   
       // Se o participante foi criado, atualiza o status da solicitação
       if (participant) {
-        await prisma.solicitacao.update({
+        await prisma.solicitation.update({
           where: { id: solicitation_id },
           data: { status: 'ACCEPTED' }
         });
