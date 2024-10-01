@@ -5,10 +5,10 @@ export default {
     let solicitation_id = 0;
     const {
       sender_id,
-  receiver_id,
-  challenge_id,
-  following_id,
-  event_id
+      receiver_id,
+      challenge_id,
+      following_id,
+      event_id
     } = req.body;
     console.log("TESTE", sender_id);
     try {
@@ -89,22 +89,22 @@ export default {
 
       const solicitations = await prisma.solicitation.findMany({
         where: { receiver_id: id },
-        include:{
-          sender:{
-            select:{
+        include: {
+          sender: {
+            select: {
               username: true,
-              name:true,
-              profile_pic_url:true
+              name: true,
+              profile_pic_url: true
             }
           },
-          challenge:{
-            select:{
-              title:true
+          challenge: {
+            select: {
+              title: true
             }
           },
-          event:{
-            select:{
-              title:true
+          event: {
+            select: {
+              title: true
             }
           },
         }
@@ -130,4 +130,71 @@ export default {
     }
   },
 
+  async acceptSolicitation(req, res) {
+    console.log("UPDATE");
+    let participant = null;
+    const { id } = req.params;
+    const solicitation_id = parseInt(id);
+  
+    // Supondo que você pega o user_id do body ou de alguma autenticação
+    const { user_id } = req.body; // ou const user_id = req.user.id;
+  
+    try {
+      // Busca pela solicitação, incluindo challenge e event
+      const solicitation = await prisma.solicitation.findUnique({
+        where: { id: solicitation_id },
+        include: { challenge: true, event: true }
+      });
+  
+      if (!solicitation) {
+        return res.status(404).json({ erro: "Solicitação não encontrada" });
+      }
+  
+      // Se for um desafio
+      if (solicitation.challenge) {
+        try {
+          participant = await prisma.challengeParticipant.create({
+            data: {
+              challenge_id: solicitation.challenge_id,
+              user_id
+            },
+          });
+        } catch (error) {
+          console.error("Erro ao ingressar no challenge", error);
+          return res.status(500).json({ erro: "Erro ao ingressar no challenge" });
+        }
+      }
+      // Se for um evento
+      else if (solicitation.event) {
+        try {
+          participant = await prisma.eventParticipant.create({
+            data: {
+              event_id: solicitation.event_id,
+              user_id
+            },
+          });
+        } catch (error) {
+          console.error("Erro ao ingressar no evento", error);
+          return res.status(500).json({ erro: "Erro ao ingressar no evento" });
+        }
+      }
+  
+      // Se o participante foi criado, atualiza o status da solicitação
+      if (participant) {
+        await prisma.solicitacao.update({
+          where: { id: solicitation_id },
+          data: { status: 'ACCEPTED' }
+        });
+        return res.status(200).json({ mensagem: "Solicitação aceita com sucesso" });
+      }
+  
+      // Se não houver participante, retorna um erro
+      return res.status(400).json({ erro: "Nenhuma participação foi registrada" });
+  
+    } catch (error) {
+      console.error("Erro ao processar a solicitação", error);
+      return res.status(500).json({ erro: "Erro ao processar a solicitação" });
+    }
+  }
+  
 };

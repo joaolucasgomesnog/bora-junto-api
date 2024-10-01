@@ -9,6 +9,6 @@ solicitationRoutes.get("/sender/:id", Solicitation.findAllSolicitationsBySender)
 solicitationRoutes.get("/receiver/:id", Solicitation.findAllSolicitationsByReceiver)
 solicitationRoutes.get("/:id", Solicitation.findSolicitationById)
 solicitationRoutes.delete("/:id", Solicitation.deleteSolicitation)
-
+solicitationRoutes.post("/:id/accept", Solicitation.acceptSolicitation)
 
 export {solicitationRoutes}
