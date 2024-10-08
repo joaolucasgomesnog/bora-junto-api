@@ -38,16 +38,18 @@ model UserCategory {
 }
 
 model Post {
-  id          String   @id @default(uuid())
-  User        User     @relation(fields: [userId], references: [id])
-  description String   @db.VarChar()
-  created_at  DateTime @default(now())
-  media_url   String?  @db.VarChar(255)
-
-  comment  Comment[]
-  like     Like[]
-  favorite Favorite[]
-  userId   String
+  id             String     @id @default(uuid())
+  User           User       @relation(fields: [userId], references: [id])
+  description    String     @db.VarChar()
+  created_at     DateTime   @default(now())
+  media_url      String?    @db.VarChar(255)
+  count_comments Int        @default(0)
+  count_likes    Int        @default(0)
+  count_shares   Int        @default(0)
+  comment        Comment[]
+  like           Like[]
+  favorite       Favorite[]
+  userId         String
 
   @@map("post")
 }
@@ -87,6 +89,7 @@ model User {
   CheckIn              CheckIn[]
   sender               Solicitation[]         @relation("Sender")
   receiver             Solicitation[]         @relation("Receiver")
+
   @@map("user")
 }
 
