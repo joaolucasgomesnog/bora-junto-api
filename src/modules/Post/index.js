@@ -121,8 +121,8 @@ export default {
             // Cria o like
             const like = await prisma.like.create({
                 data: {
-                    post_id: post_id,
-                    user_id: user_id,
+                    post_id,
+                    user_id,
                 },
             });
     
