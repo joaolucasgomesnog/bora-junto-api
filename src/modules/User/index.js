@@ -5,6 +5,7 @@ export default {
   async createUser(req, res) {
     const {
       id,
+      notificationToken,
       name,
       username,
       user_category_id,
@@ -15,6 +16,7 @@ export default {
     } = req.body;
     console.log(
       "usuario no create",
+      notificationToken,
       name,
       username,
       user_category_id,
@@ -28,6 +30,7 @@ export default {
       const user = await prisma.user.create({
         data: {
           id,
+          notificationToken,
           name,
           username,
           email,
@@ -362,4 +365,20 @@ export default {
       return res.json({ error });
     }
   },
+
+  async getNotificationTokenByUserId(user_id){
+    try {
+      const notificationToken = prisma.user.findUnique({
+        where: {
+          id: user_id
+        },
+        select: {
+          notificationToken: true,
+        }
+      })
+      return notificationToken
+    } catch (error) {
+      console.log("Não foi possivel obter o token")
+    }
+  }
 };

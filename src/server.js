@@ -4,7 +4,11 @@ import cors from "cors";
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 
+import {Expo} from 'expo-server-sdk'
+const expo = new Expo();
+
 import Message from './modules/Message/index.js'; // Importe o controller de mensagens
+import User from './modules/User/index.js'
 const PORT = process.env.PORT || 3030;
 const app = express();
 const server = createServer(app);
@@ -44,7 +48,7 @@ io.on("connection", (socket) => {
         console.log(`User with ID: ${userId} joined room: ${userId}`);
     });
 
-    socket.on('message', async ({ sender_id, receiver_id, content }) => {
+    socket.on('message', async ({ sender_id, sender_name, receiver_id, content }) => {
         console.log('message received:', sender_id, receiver_id, content);
 
         try {
@@ -57,6 +61,12 @@ io.on("connection", (socket) => {
             const messages = await Message.fetchAllMessagesByUser(sender_id, receiver_id);
             io.to(sender_id).emit('get_messages', messages);
             io.to(receiver_id).emit('get_messages', messages);
+
+            const {notificationToken} = await User.getNotificationTokenByUserId(receiver_id)
+
+            if (notificationToken) {
+                await sendPushNotification(notificationToken, `${sender_name}: ${content}`);
+            }
             
         } catch (error) {
             console.error('Error fetching messages:', error);
@@ -78,3 +88,27 @@ io.on("connection", (socket) => {
         console.log('user disconnected');
     });
 });
+
+
+async function sendPushNotification(token, message) {
+  if (!Expo.isExpoPushToken(token)) {
+    console.error(`Push token ${token} is not valid!`);
+    return;
+  }
+
+  const notifications = [{
+    to: token,
+    sound: 'default',
+    body: message,
+    data: { message },
+  }];
+
+  const chunks = expo.chunkPushNotifications(notifications);
+  for (let chunk of chunks) {
+    try {
+      await expo.sendPushNotificationsAsync(chunk);
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  }
+}
