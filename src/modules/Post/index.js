@@ -1,10 +1,10 @@
 
 import { prisma } from "../../lib/prisma.js";
 
-export default { 
+export default {
 
-    async createPost(req, res){
-        const { description, media_url} = req.body
+    async createPost(req, res) {
+        const { description, media_url } = req.body
         try {
             const user = await prisma.post.create({
                 data: {
@@ -15,15 +15,15 @@ export default {
             res.json(user)
         } catch (error) {
             console.error('Erro while creating post', error)
-            res.status(500).json({error: 'Erro while creating post'})
+            res.status(500).json({ error: 'Erro while creating post' })
         }
 
     },
-    async deletePost(req, res){
-        const {id} = req.params
+    async deletePost(req, res) {
+        const { id } = req.params
         const post_id = parseInt(id)
         try {
-            
+
             const deleted_post = await prisma.post.delete({
                 where: {
                     id: post_id
@@ -32,13 +32,13 @@ export default {
             res.json(deleted_post)
         } catch (error) {
             console.error('Erro while creating post', error)
-            res.status(500).json({erro: 'Erro while deleting post', error})
+            res.status(500).json({ erro: 'Erro while deleting post', error })
         }
 
     },
-    async updatePost(req, res){
-        const {id} = req.params
-        const {description} = req.body
+    async updatePost(req, res) {
+        const { id } = req.params
+        const { description } = req.body
         const post_id = parseInt(id)
 
         try {
@@ -54,14 +54,14 @@ export default {
             res.json(updated_post)
         } catch (error) {
             console.error('Erro while creating post', error)
-            res.status(500).json({erro: 'Erro while updating post', error})
+            res.status(500).json({ erro: 'Erro while updating post', error })
         }
 
 
     },
     async getAllPosts(req, res) {
         const { user_id } = req.params; // Supondo que o ID do usuário vem dos parâmetros da requisição
-    
+
         try {
             const all_posts = await prisma.post.findMany({
                 include: {
@@ -76,9 +76,6 @@ export default {
                         where: {
                             user_id: user_id,
                         },
-                        select: {
-                            id: true, // Pode incluir mais campos, se necessário
-                        },
                     },
                     comment: {
                         where: {
@@ -91,16 +88,16 @@ export default {
                 },
             });
 
-    
+
             res.json(all_posts);
         } catch (error) {
             console.error('Erro ao buscar posts:', error);
             res.status(500).json({ erro: 'Erro ao buscar posts', error });
         }
     },
-    
-    async getAllPostsById(req, res){
-        const {id} = req.params
+
+    async getAllPostsById(req, res) {
+        const { id } = req.params
         const post_id = parseInt(id)
         try {
             const allPosts = await prisma.post.findMany({
@@ -111,12 +108,12 @@ export default {
             res.json(allPosts)
         } catch (error) {
             console.error('Erro while creating post', error)
-            res.status(500).json({erro: 'Erro while updating post', error})
+            res.status(500).json({ erro: 'Erro while updating post', error })
         }
     },
     async likePost(req, res) {
         const { user_id, post_id } = req.params;
-    
+
         try {
             // Cria o like
             const like = await prisma.like.create({
@@ -125,7 +122,7 @@ export default {
                     user_id,
                 },
             });
-    
+
             if (like) {
                 // Busca o post atual para obter o valor de count_likes
                 const post = await prisma.post.findUnique({
@@ -136,7 +133,7 @@ export default {
                         count_likes: true, // Busca apenas o campo count_likes
                     },
                 });
-    
+
                 // Atualiza o campo count_likes
                 const updated_post = await prisma.post.update({
                     where: {
@@ -146,7 +143,50 @@ export default {
                         count_likes: post.count_likes + 1, // Incrementa o valor atual de count_likes
                     },
                 });
-    
+
+                res.json(updated_post);
+            }
+        } catch (error) {
+            console.error('Erro ao criar like e atualizar o post:', error);
+            res.status(500).json({ erro: 'Erro ao atualizar o post', error });
+        }
+    },
+
+    async dislikePost(req, res) {
+        const { user_id, post_id } = req.params;
+
+        try {
+            // Cria o like
+            const like = await prisma.like.delete({
+                where: {
+                    user_id_post_id: {
+                      user_id: user_id, // o ID do usuário
+                      post_id: post_id // o ID do post
+                    },
+                }
+            });
+
+            if (like) {
+                // Busca o post atual para obter o valor de count_likes
+                const post = await prisma.post.findUnique({
+                    where: {
+                        id: post_id,
+                    },
+                    select: {
+                        count_likes: true, // Busca apenas o campo count_likes
+                    },
+                });
+
+                // Atualiza o campo count_likes
+                const updated_post = await prisma.post.update({
+                    where: {
+                        id: post_id,
+                    },
+                    data: {
+                        count_likes: post.count_likes - 1, // Incrementa o valor atual de count_likes
+                    },
+                });
+
                 res.json(updated_post);
             }
         } catch (error) {
@@ -167,7 +207,7 @@ export default {
                     description,
                 },
             });
-    
+
             if (comment) {
                 // Busca o post atual para obter o valor de count_comments
                 const post = await prisma.post.findUnique({
@@ -178,7 +218,7 @@ export default {
                         count_comments: true, // Busca apenas o campo count_comments
                     },
                 });
-    
+
                 // Atualiza o campo count_comments
                 const updated_post = await prisma.post.update({
                     where: {
@@ -188,7 +228,7 @@ export default {
                         count_comments: post.count_comments + 1, // Incrementa o valor atual de count_comments
                     },
                 });
-    
+
                 res.json(updated_post);
             }
         } catch (error) {
@@ -196,7 +236,7 @@ export default {
             res.status(500).json({ erro: 'Erro ao atualizar o post', error });
         }
     },
-    
+
     async sharePost(req, res) {
         const { user_id, post_id } = req.params;
         try {
@@ -207,7 +247,7 @@ export default {
                     user_id: user_id,
                 },
             });
-    
+
             if (share) {
                 // Busca o post atual para obter o valor de count_shares
                 const post = await prisma.post.findUnique({
@@ -218,7 +258,7 @@ export default {
                         count_shares: true, // Busca apenas o campo count_shares
                     },
                 });
-    
+
                 // Atualiza o campo count_shares
                 const updated_post = await prisma.post.update({
                     where: {
@@ -228,7 +268,7 @@ export default {
                         count_shares: post.count_shares + 1, // Incrementa o valor atual de count_comments
                     },
                 });
-    
+
                 res.json(updated_post);
             }
         } catch (error) {
@@ -237,7 +277,7 @@ export default {
         }
     }
 
-    
+
     // async getCommentsByPost(req, res) {
     //     try {
     //         const { postId } = req.params

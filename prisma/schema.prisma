@@ -195,13 +195,12 @@ model Comment {
 }
 
 model Like {
-  id      Int    @id @default(autoincrement())
   user_id String
   post_id String
 
   user User @relation(fields: [user_id], references: [id])
   post Post @relation(fields: [post_id], references: [id])
-
+  @@id([user_id, post_id])
   @@map("like")
 }
 
