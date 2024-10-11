@@ -14,7 +14,6 @@ export default {
       latitude,
       longitude
     } = req.body;
-    console.log("TESTE",user_id)
     try {
       const event = await prisma.event.create({
         data: {
@@ -53,6 +52,12 @@ export default {
       res.status(500).json({ error: "Erro while creating event" });
     }
     try {
+      // const event_exists = await prisma.event.findUnique({where: event_id})
+      // if(!event_exists){
+      //   console.log('Evento nao existe')
+      //   return
+      // }
+
       const participant = await prisma.eventParticipant.create({
         data: {
           event_id,
@@ -88,7 +93,6 @@ export default {
 
 
   async updateEvent(req, res) {
-    console.log(" UPDATE");
     const { id } = req.params;
 
     const event_id = parseInt(id);

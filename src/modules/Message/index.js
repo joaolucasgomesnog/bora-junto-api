@@ -46,12 +46,7 @@ export default {
         const {id} = req.params
         const receiver_id = req.query.receiver_id;
 
-        console.log('receiver:',receiver_id)
-        console.log('sender:',id)
-        
-
         try {
-            // await viewMessages(id, receiver_id)
 
             const messages = await prisma.message.findMany({
                 where: {
@@ -70,7 +65,6 @@ export default {
                     created_at: 'desc' // or 'desc' for descending order
                 }
             });
-            // console.log(messages)
             return res.json(messages);
 
         } catch (error) {
@@ -79,7 +73,6 @@ export default {
         }
     },
     async fetchAllMessagesByUser(userId, receiverId) {
-        console.log('receiver:', receiverId);
     
         try {
             const messages = await prisma.message.findMany({
@@ -109,7 +102,6 @@ export default {
     async fetchLastMessageWithSenderFlag(req, res) {
         const {id: userId} = req.params
         const receiver_id = req.query.receiver_id;
-        console.log("chegouu", userId, receiver_id)
 
         try {
           // Busca a última mensagem na conversa entre userId e receiverId
@@ -134,7 +126,6 @@ export default {
           // Verifica se a última mensagem foi enviada pelo próprio usuário
           const isSentByUser = lastMessage ? lastMessage.sender_id === userId : false;
     
-        //   console.log("Last", lastMessage, isSentByUser)
           return res.status(200).json({
             lastMessage,
             isSentByUser

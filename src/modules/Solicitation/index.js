@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import Notification from "../Notification/index.js";
 
 export default {
   async createSolicitation(req, res) {
@@ -35,6 +36,27 @@ export default {
           } : undefined, // Conectando ao following se o ID for fornecido
         },
       });
+
+      const {username: sender_name} = await prisma.user.findUnique({
+        where: { id: sender_id },
+        select: {username: true}
+      })
+
+      let notificationMessage = `${sender_name} te enviou uma solicitação.`;
+
+      if(challenge_id){
+        notificationMessage = `${sender_name} te convidou para um desafio.`
+      }else if (event_id){
+        notificationMessage = `${sender_name} te convidou para um evento.`
+      }else if(following_id){
+        notificationMessage = `${sender_name} começou a te seguir.`
+      }
+
+      const {notificationToken} = await Notification.getNotificationTokenByUserId(receiver_id)
+      if(notificationToken){
+        await Notification.sendPushNotification(notificationToken, notificationMessage)
+      }
+
       res.json(solicitation);
       solicitation_id = solicitation.id;
     } catch (error) {

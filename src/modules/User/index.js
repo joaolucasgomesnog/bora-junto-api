@@ -366,19 +366,5 @@ export default {
     }
   },
 
-  async getNotificationTokenByUserId(user_id){
-    try {
-      const notificationToken = prisma.user.findUnique({
-        where: {
-          id: user_id
-        },
-        select: {
-          notificationToken: true,
-        }
-      })
-      return notificationToken
-    } catch (error) {
-      console.log("Não foi possivel obter o token")
-    }
-  }
+  
 };

@@ -1,4 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
+import Notification from '../Notification/index.js'
+
 
 export default {
   async createParticipant(req, res) {
@@ -33,6 +35,27 @@ export default {
           user_id,
         },
       });
+
+      //enviar notificação para o dono do evento
+      const eventOwner = await prisma.event.findUnique({
+        where: {
+          id: event_id
+        },
+        select: {
+          user: {
+            select: {
+              notificationToken: true, // Pegando o campo 'token' do usuário
+            }
+          },
+
+        }
+
+      })
+
+      console.log("PPPPPPPPPPPPP", eventOwner.user.notificationToken, participant)
+      if (eventOwner.user.notificationToken) {
+          await Notification.sendPushNotification(eventOwner.user.notificationToken, `${user_exists.username} se juntou ao seu evento!`);
+      }                        
 
       res.status(201).json(participant);
     } catch (error) {
