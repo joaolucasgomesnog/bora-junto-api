@@ -78,13 +78,16 @@ export default {
                         },
                     },
                     comment: {
-                        where: {
-                            user_id: user_id,
-                        },
-                        select: {
-                            id: true, // Pode incluir mais campos, se necessário
-                        },
-                    },
+                        include:{
+                            user:{
+                                select:{
+                                    username:true,
+                                    name:true,
+                                    profile_pic_url:true
+                                }
+                            }
+                        }
+                    }
                 },
             });
 
