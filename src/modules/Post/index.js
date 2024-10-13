@@ -4,15 +4,16 @@ import { prisma } from "../../lib/prisma.js";
 export default {
 
     async createPost(req, res) {
-        const { description, media_url } = req.body
+        const { user_id, description, media_url } = req.body
         try {
-            const user = await prisma.post.create({
+            const post = await prisma.post.create({
                 data: {
+                    userId:user_id,
                     description,
                     media_url,
                 }
             })
-            res.json(user)
+            res.json(post)
         } catch (error) {
             console.error('Erro while creating post', error)
             res.status(500).json({ error: 'Erro while creating post' })
