@@ -10,6 +10,7 @@ import { challengeParticipantRoutes } from './challengeparticipant.routes.js';
 import { challengeRoutes } from './challenge.routes.js';
 import { checkInRoutes } from './checkin.routes.js';
 import { solicitationRoutes } from './solicitation.routes.js';
+import { notificationRoutes } from './notification.routes.js';
 
 const routes = express()
 
@@ -24,5 +25,6 @@ routes.use('/eventparticipant', eventParticipantRoutes)
 routes.use('/challengeparticipant', challengeParticipantRoutes)
 routes.use('/checkin', checkInRoutes)
 routes.use('/solicitation', solicitationRoutes)
+routes.use('/notification', notificationRoutes)
 
 export {routes}

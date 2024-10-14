@@ -38,20 +38,42 @@ model UserCategory {
 }
 
 model Post {
-  id             String     @id @default(uuid())
-  User           User       @relation(fields: [userId], references: [id])
-  description    String     @db.VarChar()
-  created_at     DateTime   @default(now())
-  media_url      String?    @db.VarChar(255)
-  count_comments Int        @default(0)
-  count_likes    Int        @default(0)
-  count_shares   Int        @default(0)
+  id             String         @id @default(uuid())
+  userId         String
+  description    String         @db.VarChar()
+  created_at     DateTime       @default(now())
+  media_url      String?        @db.VarChar(255)
+  count_comments Int            @default(0)
+  count_likes    Int            @default(0)
+  count_shares   Int            @default(0)
+  User           User           @relation(fields: [userId], references: [id])
   comment        Comment[]
   like           Like[]
   favorite       Favorite[]
-  userId         String
+  Notification   Notification[]
 
   @@map("post")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  type       String   @db.VarChar(50) // Tipo da notificação: "like", "comment", "new_follower", etc.
+  read       Boolean  @default(false) // Indica se a notificação foi lida
+  created_at DateTime @default(now())
+
+  // Relacionamento com post (para notificações de curtida ou comentário)
+  postId String? // Se a notificação está relacionada a um post
+  Post   Post?   @relation(fields: [postId], references: [id])
+
+  // Usuário que recebe a notificação
+  userId String // Usuário que está recebendo a notificação
+  User   User   @relation(fields: [userId], references: [id])
+
+  // Usuário que disparou a notificação (quem curtiu, comentou ou seguiu)
+  triggeredById String // Usuário que gerou a notificação
+  triggeredBy   User   @relation("UserTriggeredNotification", fields: [triggeredById], references: [id])
+
+  @@map("notification")
 }
 
 model User {
@@ -70,26 +92,28 @@ model User {
   updated_at         DateTime  @updatedAt
   location_id        Int
 
-  user_category        UserCategory           @relation(fields: [user_category_id], references: [id])
-  current_local_id     Location               @relation(fields: [location_id], references: [id])
-  following            Following[]            @relation("Following")
-  follower             Following[]            @relation("Follower")
-  comment              Comment[]
-  like                 Like[]
-  favorite             Favorite[]
-  event                Event[]
-  goal                 Goal[]
-  sentMessages         Message[]              @relation("SentMessages")
-  receiveMessages      Message[]              @relation("ReceivedMessages")
-  EventParticipant     EventParticipant[]
-  ChallengeParticipant ChallengeParticipant[]
-  contact              User[]                 @relation("UserContacts")
-  User                 User[]                 @relation("UserContacts")
-  Post                 Post[]
-  Challenge            Challenge[]
-  CheckIn              CheckIn[]
-  sender               Solicitation[]         @relation("Sender")
-  receiver             Solicitation[]         @relation("Receiver")
+  user_category          UserCategory           @relation(fields: [user_category_id], references: [id])
+  current_local_id       Location               @relation(fields: [location_id], references: [id])
+  following              Following[]            @relation("Following")
+  follower               Following[]            @relation("Follower")
+  comment                Comment[]
+  like                   Like[]
+  favorite               Favorite[]
+  event                  Event[]
+  goal                   Goal[]
+  sentMessages           Message[]              @relation("SentMessages")
+  receiveMessages        Message[]              @relation("ReceivedMessages")
+  EventParticipant       EventParticipant[]
+  ChallengeParticipant   ChallengeParticipant[]
+  contact                User[]                 @relation("UserContacts")
+  User                   User[]                 @relation("UserContacts")
+  Post                   Post[]
+  Challenge              Challenge[]
+  CheckIn                CheckIn[]
+  sender                 Solicitation[]         @relation("Sender")
+  receiver               Solicitation[]         @relation("Receiver")
+  Notification           Notification[]
+  triggeredNotifications Notification[]         @relation("UserTriggeredNotification") // Notificações que o usuário gerou
 
   @@map("user")
 }

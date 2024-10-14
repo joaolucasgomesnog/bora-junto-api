@@ -6,7 +6,7 @@ import { createServer } from 'http';
 
 
 import Message from './modules/Message/index.js'; // Importe o controller de mensagens
-import Notification from './modules/Notification/index.js'
+import Notification from './modules/PushNotification/index.js'
 
 const PORT = process.env.PORT || 3030;
 const app = express();

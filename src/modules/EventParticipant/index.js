@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import Notification from '../Notification/index.js'
+import Notification from '../PushNotification/index.js'
 
 
 export default {

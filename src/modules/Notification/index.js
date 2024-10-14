@@ -1,46 +1,73 @@
 import { prisma } from "../../lib/prisma.js";
-import {Expo} from 'expo-server-sdk'
-const expo = new Expo();
+import PushNotification from '../PushNotification/index.js'
+
+// Função para criar uma notificação
 
 export default {
-  async getNotificationTokenByUserId(user_id) {
+  async createNotification(type, userId, triggeredById, postId = null) {
     try {
-      const notificationTokens = prisma.user.findUnique({
-        where: {
-          id: user_id,
-        },
-        select: {
-          notificationTokens: true,
+      const newNotification = await prisma.notification.create({
+        data: {
+          type,
+          userId,
+          triggeredById,
+          postId, // postId é opcional, apenas para curtidas/comentários
         },
       });
-      return notificationTokens;
+      return newNotification;
     } catch (error) {
-      console.log("Não foi possivel obter o token");
+      console.error('Erro ao criar notificação:', error);
+      throw error;
     }
   },
+  
+  // Função para obter todas as notificações por userId
+  async getAllNotificationsByUserId(req, res) {
+    try {
+      const {id} = req.params
 
-  async sendPushNotification(token, message) {
-    if (!Expo.isExpoPushToken(token)) {
-      console.error(`Push token ${token} is not valid!`);
-      return;
-    }
-
-    const notifications = [
-      {
-        to: token,
-        sound: "default",
-        body: message,
-        data: { message },
-      },
-    ];
-
-    const chunks = expo.chunkPushNotifications(notifications);
-    for (let chunk of chunks) {
-      try {
-        await expo.sendPushNotificationsAsync(chunk);
-      } catch (error) {
-        console.error("Error sending notification:", error);
-      }
+      const notifications = await prisma.notification.findMany({
+        where: { userId: id },
+        include: {
+          Post: {
+            select: {
+              id: true,          // Selecionar apenas o ID do post
+              description: true, // Selecionar a descrição do post
+              media_url: true,   // Selecionar a URL da mídia (se aplicável)
+            },
+          },
+          triggeredBy: {
+            select: {
+              id: true,
+              username: true,
+              profile_pic_url: true,
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' }, // Ordenar pela mais recente
+      });
+      
+      return res.status(200).json(notifications);
+    } catch (error) {
+      console.error('Erro ao obter notificações:', error);
+      throw error;
     }
   },
-};
+  
+  // Função para deletar todas as notificações por userId
+  async deleteAllNotificationsByUserId(req, res) {
+    try {
+      const {id} = req.params
+
+      const deleteCount = await prisma.notification.deleteMany({
+        where: { userId: id },
+      });
+      return deleteCount;
+    } catch (error) {
+      console.error('Erro ao deletar notificações:', error);
+      throw error;
+    }
+  }
+
+}
+

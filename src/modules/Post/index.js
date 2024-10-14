@@ -1,5 +1,6 @@
 
 import { prisma } from "../../lib/prisma.js";
+import Notification from '../Notification/index.js'
 
 export default {
 
@@ -148,7 +149,19 @@ export default {
                     },
                 });
 
+                //pega o id do dono do post para criar a notificação
+                const postOwner = await prisma.post.findUnique({
+                    where: {id: post_id},
+                    select: {
+                        userId: true,
+                    }
+                })
+
+                const newNotification = await Notification.createNotification("like", postOwner.userId, user_id, post_id )
+                
+                console.log(newNotification)
                 res.json(updated_post);
+
             }
         } catch (error) {
             console.error('Erro ao criar like e atualizar o post:', error);
@@ -233,6 +246,18 @@ export default {
                     },
                 });
 
+                //pega o id do dono do post para salvar a notificação
+                const postOwner = await prisma.post.findUnique({
+                    where: {id: post_id},
+                    select: {
+                        userId: true,
+                    }
+                })
+
+                const newNotification = await Notification.createNotification("comment", postOwner.userId, user_id, post_id )
+                console.log(newNotification)
+
+ 
                 res.json(updated_post);
             }
         } catch (error) {
