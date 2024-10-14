@@ -5,15 +5,15 @@ const expo = new Expo();
 export default {
   async getNotificationTokenByUserId(user_id) {
     try {
-      const notificationToken = prisma.user.findUnique({
+      const notificationTokens = prisma.user.findUnique({
         where: {
           id: user_id,
         },
         select: {
-          notificationToken: true,
+          notificationTokens: true,
         },
       });
-      return notificationToken;
+      return notificationTokens;
     } catch (error) {
       console.log("Não foi possivel obter o token");
     }

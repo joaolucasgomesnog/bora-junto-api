@@ -5,7 +5,7 @@ export default {
   async createUser(req, res) {
     const {
       id,
-      notificationToken,
+      notificationTokens,
       name,
       username,
       user_category_id,
@@ -16,7 +16,7 @@ export default {
     } = req.body;
     console.log(
       "usuario no create",
-      notificationToken,
+      notificationTokens,
       name,
       username,
       user_category_id,
@@ -30,7 +30,7 @@ export default {
       const user = await prisma.user.create({
         data: {
           id,
-          notificationToken,
+          notificationTokens,
           name,
           username,
           email,
@@ -366,5 +366,77 @@ export default {
     }
   },
 
+  async updateUserTokens(req, res) {
+    try {
+      const { expoPushToken } = req.body;
+      const { id } = req.params;
+  
+      console.log("TOKEN", expoPushToken, id);
+  
+      // Obtém o usuário atual para verificar se o token já está na lista
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { notificationTokens: true },
+      });
+  
+      // Verifica se o token já existe para evitar duplicatas
+      if (!user.notificationTokens.includes(expoPushToken)) {
+        const updatedUser = await prisma.user.update({
+          where: { id },
+          data: {
+            notificationTokens: {
+              push: expoPushToken, // Adiciona o novo token ao array existente
+            },
+          },
+        });
+
+        console.log("USER ATUALIZADO", updatedUser)
+  
+        return res.status(200).json(updatedUser);
+      } else {
+        let user = await prisma.user.findUnique({where: { id }})
+
+        return res.status(200).json(user);
+      }
+    } catch (error) {
+      console.error("EROOOOO", error);
+      return res.status(500).json({ error: "Erro ao atualizar tokens" });
+    }
+  },
+
+  async deleteUserToken(req, res) {
+    try {
+      const { expoPushToken } = req.query;
+      const { id } = req.params;
+  
+      // Buscar os tokens atuais do usuário
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { notificationTokens: true }, // Seleciona apenas os tokens de notificação
+      });
+      console.log("Token antes de atualizados", user, expoPushToken)
+
+  
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+  
+      // Filtrar a lista de tokens, removendo o token que deseja deletar
+      const updatedTokens = user.notificationTokens.filter(token => token !== expoPushToken);
+  
+      // Atualizar a lista de tokens no banco de dados
+      const aaa = await prisma.user.update({
+        where: { id },
+        data: { notificationTokens: updatedTokens }, // Substitui os tokens com a lista atualizada
+      });
+  
+      console.log("Token atualizados", aaa)
+      return res.status(200).json({ message: 'Token removido com sucesso', updatedTokens });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Erro ao remover o token' });
+    }
+  }
+  
   
 };

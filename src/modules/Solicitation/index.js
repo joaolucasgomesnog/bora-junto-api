@@ -52,10 +52,17 @@ export default {
         notificationMessage = `${sender_name} começou a te seguir.`
       }
 
-      const {notificationToken} = await Notification.getNotificationTokenByUserId(receiver_id)
-      if(notificationToken){
-        await Notification.sendPushNotification(notificationToken, notificationMessage)
+      const {notificationTokens} = await Notification.getNotificationTokenByUserId(receiver_id)
+
+      if (notificationTokens.length > 0) {
+        await Promise.all(
+          notificationTokens.map(async (token) => {
+            await Notification.sendPushNotification(token, notificationMessage);
+          })
+        );
+        console.log('Notificações enviadas para todos os tokens');
       }
+      
 
       res.json(solicitation);
       solicitation_id = solicitation.id;

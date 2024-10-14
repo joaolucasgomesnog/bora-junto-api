@@ -56,19 +56,19 @@ model Post {
 
 model User {
   // id               Int      @id @default(autoincrement())
-  id                String    @id @unique
-  notificationToken String?   @unique
-  username          String    @unique
-  name              String
-  user_category_id  Int
-  description       String?
-  profile_pic_url   String?
-  phone             String    @unique
-  email             String    @unique
-  birth_date        DateTime?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  location_id       Int
+  id                 String    @id @unique
+  notificationTokens String[]
+  username           String    @unique
+  name               String
+  user_category_id   Int
+  description        String?
+  profile_pic_url    String?
+  phone              String    @unique
+  email              String    @unique
+  birth_date         DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  location_id        Int
 
   user_category        UserCategory           @relation(fields: [user_category_id], references: [id])
   current_local_id     Location               @relation(fields: [location_id], references: [id])

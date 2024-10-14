@@ -61,13 +61,18 @@ io.on("connection", (socket) => {
             io.to(sender_id).emit('get_messages', messages);
             io.to(receiver_id).emit('get_messages', messages);
 
-            const {notificationToken} = await Notification.getNotificationTokenByUserId(receiver_id)
+            const {notificationTokens} = await Notification.getNotificationTokenByUserId(receiver_id)
 
-            console.log("KKKKKKKKKKKKKKKKKKK", notificationToken)
-            if (notificationToken) {
-                await Notification.sendPushNotification(notificationToken, `${sender_name}: ${content}`);
-                console.log('ok')
-            }
+            console.log("KKKKKKKKKKKKKKKKKKK", notificationTokens)
+            if (notificationTokens.length > 0) {
+                await Promise.all(
+                  notificationTokens.map(async (token) => {
+                    await Notification.sendPushNotification(token, `${sender_name}: ${content}`);
+                  })
+                );
+                console.log('Notificações enviadas para todos os tokens');
+              }
+              
             
         } catch (error) {
             console.error('Error fetching messages:', error);

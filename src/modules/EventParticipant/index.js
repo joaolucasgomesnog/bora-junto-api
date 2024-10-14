@@ -44,7 +44,7 @@ export default {
         select: {
           user: {
             select: {
-              notificationToken: true, // Pegando o campo 'token' do usuário
+              notificationTokens: true, // Pegando o campo 'token' do usuário
             }
           },
 
@@ -52,10 +52,17 @@ export default {
 
       })
 
-      console.log("PPPPPPPPPPPPP", eventOwner.user.notificationToken, participant)
-      if (eventOwner.user.notificationToken) {
-          await Notification.sendPushNotification(eventOwner.user.notificationToken, `${user_exists.username} se juntou ao seu evento!`);
-      }                        
+      console.log("PPPPPPPPPPPPP", eventOwner.user.notificationTokens, participant)
+
+      if (eventOwner.user.notificationTokens.length > 0) {
+        await Promise.all(
+          eventOwner.user.notificationTokens.map(async (token) => {
+            await Notification.sendPushNotification(token, `${user_exists.username} se juntou ao seu evento!`);
+          })
+        );
+        console.log('Notificações enviadas para todos os tokens');
+      }
+      
 
       res.status(201).json(participant);
     } catch (error) {
