@@ -61,11 +61,13 @@ export default {
 
 
     },
-    async getAllPosts(req, res) {
-        const { user_id } = req.params; // Supondo que o ID do usuário vem dos parâmetros da requisição
+    async getFeed(req, res) {
+        const { user_id, page} = req.params; // Supondo que o ID do usuário vem dos parâmetros da requisição
 
         try {
             const all_posts = await prisma.post.findMany({
+                skip: (Number(page)-1)*10,
+                take: 10,
                 include: {
                     User: {
                         select: {
@@ -100,7 +102,50 @@ export default {
             res.status(500).json({ erro: 'Erro ao buscar posts', error });
         }
     },
+    async getPostsByUser(req, res) {
+        const { user_id, visitor_id, page } = req.params; // Supondo que o ID do usuário vem dos parâmetros da requisição
 
+        try {
+            const all_posts = await prisma.post.findMany({
+                skip: (Number(page)-1)*10,
+                take: 10,
+                where:{
+                    userId: user_id
+                },
+                include: {
+                    User: {
+                        select: {
+                            username: true,
+                            profile_pic_url: true,
+                            name: true,
+                        },
+                    },
+                    like: {
+                        where: {
+                            user_id: visitor_id,
+                        },
+                    },
+                    comment: {
+                        include:{
+                            user:{
+                                select:{
+                                    username:true,
+                                    name:true,
+                                    profile_pic_url:true
+                                }
+                            }
+                        }
+                    }
+                },
+            });
+
+
+            res.json(all_posts);
+        } catch (error) {
+            console.error('Erro ao buscar posts:', error);
+            res.status(500).json({ erro: 'Erro ao buscar posts', error });
+        }
+    },
     async getAllPostsById(req, res) {
         const { id } = req.params
         const post_id = parseInt(id)

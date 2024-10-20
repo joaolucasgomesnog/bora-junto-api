@@ -120,29 +120,29 @@ export default {
           user_category: true,
         },
       });
-  
+
       if (!user) {
         console.error("User not found");
         return res.status(404).json({ error: "User not found" });
       }
-  
+
       // Flatten the messages and find the latest message for each contact
       const contactsWithMessages = user.contact.map(contact => {
         const sentMessage = contact.sentMessages[0] || { created_at: new Date(0) }; // Default to far past date if no message
         const receivedMessage = contact.receiveMessages[0] || { created_at: new Date(0) };
-        
+
         // Use the latest message date for sorting
         const latestMessageDate = sentMessage.created_at > receivedMessage.created_at ? sentMessage.created_at : receivedMessage.created_at;
-        
+
         return {
           ...contact,
           latestMessageDate,
         };
       });
-  
+
       // Sort contacts based on the latest message date
       const sortedContacts = contactsWithMessages.sort((a, b) => b.latestMessageDate - a.latestMessageDate);
-  
+
       console.log(sortedContacts)
       res.json(sortedContacts);
     } catch (error) {
@@ -150,9 +150,9 @@ export default {
       res.status(500).json({ error: "Error while getting contacts" });
     }
   },
-  
 
-  
+
+
 
 
   async setContactToUser(req, res) {
@@ -242,8 +242,11 @@ export default {
       const { id } = req.params;
       const user = await prisma.user.findUnique({
         where: { id },
-        include: { user_category: true },
-      });
+        include: {
+          user_category: true, follower: { select: { follower: { select: { username: true, profile_pic_url: true } } } },
+          following: { select: { following: { select: { username: true, profile_pic_url: true } } } }
+        }
+        });
       if (!user) {
         console.log("nao encontrado");
         return res.json({ error: "User does not exist" });
@@ -370,15 +373,15 @@ export default {
     try {
       const { expoPushToken } = req.body;
       const { id } = req.params;
-  
+
       console.log("TOKEN", expoPushToken, id);
-  
+
       // Obtém o usuário atual para verificar se o token já está na lista
       const user = await prisma.user.findUnique({
         where: { id },
         select: { notificationTokens: true },
       });
-  
+
       // Verifica se o token já existe para evitar duplicatas
       if (!user.notificationTokens.includes(expoPushToken)) {
         const updatedUser = await prisma.user.update({
@@ -391,10 +394,10 @@ export default {
         });
 
         console.log("USER ATUALIZADO", updatedUser)
-  
+
         return res.status(200).json(updatedUser);
       } else {
-        let user = await prisma.user.findUnique({where: { id }})
+        let user = await prisma.user.findUnique({ where: { id } })
 
         return res.status(200).json(user);
       }
@@ -408,7 +411,7 @@ export default {
     try {
       const { expoPushToken } = req.query;
       const { id } = req.params;
-  
+
       // Buscar os tokens atuais do usuário
       const user = await prisma.user.findUnique({
         where: { id },
@@ -416,20 +419,20 @@ export default {
       });
       console.log("Token antes de atualizados", user, expoPushToken)
 
-  
+
       if (!user) {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
-  
+
       // Filtrar a lista de tokens, removendo o token que deseja deletar
       const updatedTokens = user.notificationTokens.filter(token => token !== expoPushToken);
-  
+
       // Atualizar a lista de tokens no banco de dados
       const aaa = await prisma.user.update({
         where: { id },
         data: { notificationTokens: updatedTokens }, // Substitui os tokens com a lista atualizada
       });
-  
+
       console.log("Token atualizados", aaa)
       return res.status(200).json({ message: 'Token removido com sucesso', updatedTokens });
     } catch (error) {
@@ -437,6 +440,6 @@ export default {
       return res.status(500).json({ error: 'Erro ao remover o token' });
     }
   }
-  
-  
+
+
 };

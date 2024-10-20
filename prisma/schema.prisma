@@ -91,6 +91,9 @@ model User {
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
   location_id        Int
+  count_posts        Int       @default(0)
+  count_following    Int       @default(0)
+  count_followers    Int       @default(0)
 
   user_category          UserCategory           @relation(fields: [user_category_id], references: [id])
   current_local_id       Location               @relation(fields: [location_id], references: [id])
