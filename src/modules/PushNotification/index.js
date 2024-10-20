@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import {Expo} from 'expo-server-sdk'
+import { Expo } from "expo-server-sdk";
 const expo = new Expo();
 
 export default {
@@ -42,5 +42,45 @@ export default {
         console.error("Error sending notification:", error);
       }
     }
+  },
+
+  async sendImmediateNotification(userId, message) {
+    const { notificationTokens } =
+      await this.getNotificationTokenByUserId(userId);
+
+    if (notificationTokens.length > 0) {
+      await Promise.all(
+        notificationTokens.map(async (token) => {
+          await this.sendPushNotification(token, message);
+        })
+      );
+      console.log("Notificação imediata enviada");
+    }
+  },
+
+  async sendGroupedNotification(userId, notificationQueue, notificationTimeouts) {
+    const notifications = notificationQueue[userId];
+    const firstNotification = notifications[0];
+    const numNotifications = notifications.length;
+
+    const message = `${firstNotification} e mais ${
+      numNotifications - 1
+    } interações.`;
+
+    const { notificationTokens } =
+      await this.getNotificationTokenByUserId(userId);
+
+    if (notificationTokens.length > 0) {
+      await Promise.all(
+        notificationTokens.map(async (token) => {
+          await this.sendPushNotification(token, message);
+        })
+      );
+      console.log("Notificações agrupadas enviadas");
+    }
+
+    // Limpa a fila e o timeout após o envio
+    notificationQueue[userId] = [];
+    clearTimeout(notificationTimeouts[userId]);
   },
 };

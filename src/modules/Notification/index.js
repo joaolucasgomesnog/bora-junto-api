@@ -3,6 +3,13 @@ import Notification from "../PushNotification/index.js";
 
 // Função para criar uma notificação
 
+let notificationQueue = {}; // Fila de notificações por usuário
+let notificationTimeouts = {}; // Timer para cada usuário
+
+const NOTIFICATION_DELAY = 120000; // 1 minuto para agrupar as notificações
+const MAX_NOTIFICATIONS_BEFORE_GROUP = 3; // Número máximo de notificações antes de agrupar
+
+
 export default {
   async createNotification(type, userId, triggeredById, postId = null) {
     try {
@@ -14,33 +21,44 @@ export default {
           postId, // postId é opcional, apenas para curtidas/comentários
         },
       });
-
-      const {username: sender_name} = await prisma.user.findUnique({
+  
+      const { username: sender_name } = await prisma.user.findUnique({
         where: { id: triggeredById },
-        select: {username: true}
-      })
-
-      let notificationMessage = `${sender_name} voçê tem novas atualizações.`;
-
-      if(newNotification.type === 'like'){
-        notificationMessage = `${sender_name} curtiu sua publicação.`
-      }else if (newNotification.type === 'comment'){
-        notificationMessage = `${sender_name} comentou a sua publicação.`
-      }else if(following_id){
-        notificationMessage = `${sender_name} começou a te seguir.`
+        select: { username: true }
+      });
+  
+      let notificationMessage = `${sender_name} você tem novas atualizações`;
+  
+      if (newNotification.type === 'like') {
+        notificationMessage = `${sender_name} curtiu sua publicação`;
+      } else if (newNotification.type === 'comment') {
+        notificationMessage = `${sender_name} comentou sua publicação`;
+      } else if (following_id) {
+        notificationMessage = `${sender_name} começou a te seguir`;
       }
-
-      const {notificationTokens} = await Notification.getNotificationTokenByUserId(userId)
-
-      if (notificationTokens.length > 0) {
-        await Promise.all(
-          notificationTokens.map(async (token) => {
-            await Notification.sendPushNotification(token, notificationMessage);
-          })
-        );
-        console.log('Notificações enviadas para todos os tokens');
+  
+      // Adiciona notificação na fila do usuário
+      if (!notificationQueue[userId]) {
+        notificationQueue[userId] = [];
       }
-
+  
+      notificationQueue[userId].push(notificationMessage);
+  
+      // Se for a primeira notificação ou poucas notificações, envia imediatamente
+      if (notificationQueue[userId].length <= MAX_NOTIFICATIONS_BEFORE_GROUP) {
+        Notification.sendImmediateNotification(userId, notificationMessage);
+      } else {
+        // Se atingir o limite, agrupar notificações
+        if (notificationTimeouts[userId]) {
+          clearTimeout(notificationTimeouts[userId]);
+        }
+  
+        // Configura o timer para enviar a notificação agrupada após um tempo
+        notificationTimeouts[userId] = setTimeout(() => {
+          Notification.sendGroupedNotification(userId, notificationQueue, notificationTimeouts);
+        }, NOTIFICATION_DELAY);
+      }
+  
       return newNotification;
     } catch (error) {
       console.error("Erro ao criar notificação:", error);
