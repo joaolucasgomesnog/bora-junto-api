@@ -1,4 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
+import haversineDistance from 'haversine-distance' // Para calcular a distância entre duas coordenadas
+
 
 export default {
   async createEvent(req, res) {
@@ -342,4 +344,65 @@ export default {
       return res.json({ error });
     }
   },
+
+
+
+  async findNearbyEvents(req, res) {
+    try {
+      const { latitude, longitude } = req.query; // Pegar a latitude e longitude do usuário via query params
+      const userLocation = { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
+    
+      if (!latitude || !longitude) {
+        return res.status(400).json({ error: "Latitude and Longitude are required" });
+      }
+  
+      const currentDate = new Date(); // Data atual para comparação
+  
+      // Buscar todos os eventos com suas respectivas localizações e que possuem data futura
+      const events = await prisma.event.findMany({
+        where: {
+          event_date: {
+            gt: currentDate // Apenas eventos com data futura
+          }
+        },
+        include: {
+          location: true,
+          privacy: true, 
+          eventCategory: true, 
+          user: {
+            select: {
+              name: true,
+              profile_pic_url: true,
+              
+            }
+          },
+          _count: {
+            select: {
+              EventParticipant: true
+            }
+          }
+        }
+      });
+    
+      // Filtrar eventos que estão dentro de um raio de 30 km
+      const nearbyEvents = events.filter(event => {
+        if (event.location) {
+          const eventLocation = { latitude: event.location.latitude, longitude: event.location.longitude };
+          const distance = haversineDistance(userLocation, eventLocation) / 1000; // Converte a distância para quilômetros
+          return distance <= 30;
+        }
+        return false;
+      });
+    
+      // Ordenar os eventos pela data
+      nearbyEvents.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+    
+      res.json(nearbyEvents);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred while fetching nearby events" });
+    }
+  }
+  
+  
 };
