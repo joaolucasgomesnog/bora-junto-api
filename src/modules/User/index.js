@@ -246,12 +246,52 @@ export default {
           user_category: true, follower: { select: { follower: { select: { username: true, profile_pic_url: true } } } },
           following: { select: { following: { select: { username: true, profile_pic_url: true } } } }
         }
-        });
+      });
       if (!user) {
         console.log("nao encontrado");
         return res.json({ error: "User does not exist" });
       }
       return res.json(user);
+    } catch (error) {
+      return res.json({ error });
+    }
+  },
+
+  async getFollowers(req, res) {
+    try {
+      const { id } = req.params;
+      const followers = await prisma.following.findMany({
+        where: { following_id: id },
+        include: {
+          follower: {
+            select: {
+              username: true,
+              profile_pic_url: true
+            }
+          }
+        }
+      });
+      return res.json(followers);
+    } catch (error) {
+      return res.json({ error });
+    }
+  },
+
+  async getFollowings(req, res) {
+    try {
+      const { id } = req.params;
+      const following = await prisma.following.findMany({
+        where: { follower: {id: id} },
+        include: {
+          following: {
+            select: {
+              username: true,
+              profile_pic_url: true
+            }
+          }
+        }
+      });
+      return res.json(following);
     } catch (error) {
       return res.json({ error });
     }
