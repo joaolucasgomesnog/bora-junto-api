@@ -9,6 +9,7 @@ export default {
       title,
       description,
       event_date,
+      created_at,
       user_id,
       privacy_id,
       category_id,
@@ -22,6 +23,7 @@ export default {
           title,
           description,
           event_date,
+          created_at,
           user: {
             connect: {
               id: user_id,
@@ -54,11 +56,7 @@ export default {
       res.status(500).json({ error: "Erro while creating event" });
     }
     try {
-      // const event_exists = await prisma.event.findUnique({where: event_id})
-      // if(!event_exists){
-      //   console.log('Evento nao existe')
-      //   return
-      // }
+
 
       const participant = await prisma.eventParticipant.create({
         data: {
@@ -76,22 +74,34 @@ export default {
   async deleteEvent(req, res) {
     const { id } = req.params;
     const event_id = parseInt(id);
-    const event_exists = await prisma.event.findMany({ where: { id: event_id } });
+  
+    const event_exists = await prisma.event.findUnique({ where: { id: event_id } });
     if (!event_exists) {
-      res.status(500).json({ erro: "Event not found" });
+      return res.status(404).json({ error: "Event not found" });
     }
+  
     try {
+      // Primeiro, excluir todos os participantes relacionados ao evento
+      await prisma.eventParticipant.deleteMany({
+        where: {
+          event_id: event_id,
+        },
+      });
+  
+      // Agora, excluir o evento
       const deleted_event = await prisma.event.delete({
         where: {
           id: event_id,
         },
       });
+  
       res.json(deleted_event);
     } catch (error) {
-      console.error("Erro while deleting event", error);
-      res.status(500).json({ erro: "Erro while deleting event", error });
+      console.error("Error while deleting event", error);
+      res.status(500).json({ error: "Error while deleting event", details: error });
     }
   },
+  
 
 
   async updateEvent(req, res) {
@@ -236,24 +246,23 @@ export default {
     }
   },
 
-
   async findAllEventsByDate(req, res) {
     const { date } = req.params;
-    const user_id  = req.query.user_id;
-
+    const user_id = req.query.user_id;
+  
     // Parse the date string to create a Date object
     const dateObj = new Date(date);
     if (isNaN(dateObj.getTime())) {
       return res.status(400).json({ error: "Invalid date format" });
     }
-
+  
     // Set the start and end of the day in UTC
     const startOfDay = new Date(dateObj);
     startOfDay.setUTCHours(0, 0, 0, 0);
-
+  
     const endOfDay = new Date(dateObj);
     endOfDay.setUTCHours(23, 59, 59, 999);
-
+  
     try {
       // Fetch events within the start and end of the day
       const events = await prisma.event.findMany({
@@ -263,26 +272,23 @@ export default {
             gte: startOfDay,
             lte: endOfDay,
           },
-
         },
-        include:{
-          location:true,
+        include: {
+          location: true,
           user: {
             select: {
               name: true,
               profile_pic_url: true,
-              
-            }
+            },
           },
           _count: {
             select: {
-              EventParticipant: true
-            }
-          }
+              EventParticipant: true,
+            },
+          },
         },
-        
       });
-
+  
       const participantEvents = await prisma.eventParticipant.findMany({
         where: {
           user_id,
@@ -292,8 +298,8 @@ export default {
               lte: endOfDay,
             },
             user_id: {
-              not: user_id
-            }
+              not: user_id,
+            },
           },
         },
         include: {
@@ -301,21 +307,19 @@ export default {
             include: {
               location: true,
               user: {
-                select:{
-                  username:true,
-                  name:true,
-                  profile_pic_url:true
-                }
+                select: {
+                  username: true,
+                  name: true,
+                  profile_pic_url: true,
+                },
               },
               _count: {
                 select: {
-                  EventParticipant: true
-                }
-              }
-
+                  EventParticipant: true,
+                },
+              },
             },
           },
-
         },
       });
   
@@ -324,17 +328,25 @@ export default {
         ...events,
         ...participantEvents.map(participant => participant.event),
       ];
-
+  
+      // Ordenar os eventos pela data, começando pela meia-noite
+      allEvents.sort((a, b) => {
+        const eventADate = new Date(a.event_date).getTime();
+        const eventBDate = new Date(b.event_date).getTime();
+        return eventADate - eventBDate; // Ordem crescente
+      });
+  
       if (!allEvents || allEvents.length === 0) {
         return res.json({ error: "No events found for this date" });
       }
-
+  
       return res.json(allEvents);
     } catch (error) {
-      console.log('Error while processing events')
+      console.log('Error while processing events', error);
       return res.status(500).json({ error: "Internal server error" });
     }
   },
+  
   async findAllCategories(req, res) {
     try {
       const categories = await prisma.eventCategory.findMany();
@@ -356,7 +368,7 @@ export default {
         return res.status(400).json({ error: "Latitude and Longitude are required" });
       }
   
-      const currentDate = new Date(); // Data atual para comparação
+      const currentDate = new Date().toISOString(); // Data atual para comparação
   
       // Buscar todos os eventos com suas respectivas localizações e que possuem data futura
       const events = await prisma.event.findMany({
