@@ -242,6 +242,9 @@ export default {
         where:{
           event_date: {
             gte: startOfDay
+          },
+          privacy: {
+            id: 3
           }
         }
 
