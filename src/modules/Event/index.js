@@ -4,7 +4,7 @@ import haversineDistance from 'haversine-distance' // Para calcular a distância
 
 export default {
   async createEvent(req, res) {
-    let event_id = 0
+    let event_id = 0;
     const {
       title,
       description,
@@ -17,60 +17,67 @@ export default {
       latitude,
       longitude
     } = req.body;
-    try {
-      const event = await prisma.event.create({
-        data: {
-          title,
-          description,
-          event_date,
-          created_at,
-          user: {
-            connect: {
-              id: user_id,
-            },
-          },
-          privacy: {
-            connect: {
-              id: privacy_id,
-            },
-          },
-          eventCategory: {
-            connect: {
-              id: category_id,
-            },
-          },
-          location: {
-            create: {
-              address: address,
-              latitude: latitude,
-              longitude: longitude
-            },
-          }
 
+    try {
+      const eventData = {
+        title,
+        description,
+        event_date,
+        created_at,
+        user: {
+          connect: {
+            id: user_id,
+          },
         },
+        privacy: {
+          connect: {
+            id: privacy_id,
+          },
+        },
+        eventCategory: {
+          connect: {
+            id: category_id,
+          },
+        },
+      };
+
+      // Condicional para criar o location apenas se latitude e longitude estiverem presentes
+      if (latitude && longitude) {
+        eventData.location = {
+          create: {
+            address: address || null, // O endereço é opcional
+            latitude: latitude,
+            longitude: longitude,
+          },
+        };
+      }
+
+      const event = await prisma.event.create({
+        data: eventData,
       });
+
       res.json(event);
-      event_id = event.id
+      event_id = event.id;
+
     } catch (error) {
-      console.error("Erro while creating event", error);
-      res.status(500).json({ error: "Erro while creating event" });
+      console.error("Erro ao criar evento", error);
+      res.status(500).json({ error: "Erro ao criar evento" });
     }
+
     try {
-
-
       const participant = await prisma.eventParticipant.create({
         data: {
           event_id,
           user_id
         },
-      })
+      });
       console.log(participant);
     } catch (error) {
-      console.error("Erro while creating participant", error);
-      res.status(500).json({ error: "Erro while creating a new participant" });
-      
+      console.error("Erro ao criar participante", error);
+      res.status(500).json({ error: "Erro ao criar um novo participante" });
     }
-  },
+},
+
   async deleteEvent(req, res) {
     const { id } = req.params;
     const event_id = parseInt(id);
