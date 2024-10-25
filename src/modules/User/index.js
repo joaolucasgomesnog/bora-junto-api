@@ -277,6 +277,24 @@ export default {
     }
   },
 
+  async getFollowingStatus(req, res) {
+    try {
+      const { visitor_id, user_id } = req.params;
+      const check = await prisma.following.findUnique({
+        where: { following_id: user_id, follower_id: visitor_id }
+
+      });
+      if (check) {
+        return res.json(true); 
+      } else {
+        return res.json(false);
+      }
+
+    } catch (error) {
+      return res.json({ error });
+    }
+  },
+
   async getFollowings(req, res) {
     try {
       const { id } = req.params;
