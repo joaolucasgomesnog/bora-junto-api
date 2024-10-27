@@ -281,7 +281,7 @@ export default {
     try {
       const { visitor_id, user_id } = req.params;
       const check = await prisma.following.findUnique({
-        where: { following_id: user_id, follower_id: visitor_id }
+        where: { follower_id_following_id:{follower_id:visitor_id, following_id:user_id} }
 
       });
       if (check) {
@@ -310,6 +310,21 @@ export default {
         }
       });
       return res.json(following);
+    } catch (error) {
+      return res.json({ error });
+    }
+  },
+  async unfollow(req, res) {
+    const {visitor_id, user_id} = req.params
+    try {
+      const following = await prisma.following.findUnique({
+        where: { follower_id_following_id:{follower_id:visitor_id, following_id:user_id} }
+
+      });
+      if (following) {
+        await prisma.following.delete({where:{id: following.id}})
+      }
+      return res.json(true);
     } catch (error) {
       return res.json({ error });
     }

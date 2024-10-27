@@ -8,7 +8,6 @@ export default {
       sender_id,
       receiver_id,
       challenge_id,
-      following_id,
       event_id
     } = req.body;
     console.log("TESTE", sender_id);
@@ -31,9 +30,6 @@ export default {
           event: event_id ? { 
             connect: { id: event_id } 
           } : undefined, // Conectando ao event se o ID for fornecido
-          following: following_id ? { 
-            connect: { id: following_id } 
-          } : undefined, // Conectando ao following se o ID for fornecido
         },
       });
 
@@ -48,8 +44,8 @@ export default {
         notificationMessage = `${sender_name} te convidou para um desafio.`
       }else if (event_id){
         notificationMessage = `${sender_name} te convidou para um evento.`
-      }else if(following_id){
-        notificationMessage = `${sender_name} começou a te seguir.`
+      }else{
+        notificationMessage = `${sender_name} solicitou para te seguir.`
       }
 
       const {notificationTokens} = await Notification.getNotificationTokenByUserId(receiver_id)
@@ -199,6 +195,18 @@ export default {
         } catch (error) {
           console.error("Erro ao ingressar no evento", error);
           return res.status(500).json({ erro: "Erro ao ingressar no evento" });
+        }
+      }else {
+        try {
+          participant = await prisma.following.create({
+            data: {
+              follower_id: solicitation.sender_id,
+              following_id: solicitation.receiver_id
+            },
+          });
+        } catch (error) {
+          console.error("Erro ao aceitar seguidor", error);
+          return res.status(500).json({ erro: "Erro ao aceitar seguidor" });
         }
       }
   
