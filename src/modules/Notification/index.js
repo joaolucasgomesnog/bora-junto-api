@@ -18,17 +18,20 @@ export default {
           type,
           userId,
           triggeredById,
-          postId, // postId é opcional, apenas para curtidas/comentários
+          postId,
         },
       });
   
+      // Limpa notificações antigas ou excedentes
+      await cleanOldNotifications(userId);
+  
+      // Resto do código para manipulação de notificações
       const { username: sender_name } = await prisma.user.findUnique({
         where: { id: triggeredById },
         select: { username: true }
       });
-  
+      
       let notificationMessage = `${sender_name} você tem novas atualizações`;
-  
       if (newNotification.type === 'like') {
         notificationMessage = `${sender_name} curtiu sua publicação`;
       } else if (newNotification.type === 'comment') {
@@ -37,23 +40,19 @@ export default {
         notificationMessage = `${sender_name} começou a te seguir`;
       }
   
-      // Adiciona notificação na fila do usuário
       if (!notificationQueue[userId]) {
         notificationQueue[userId] = [];
       }
-  
+    
       notificationQueue[userId].push(notificationMessage);
-  
-      // Se for a primeira notificação ou poucas notificações, envia imediatamente
+    
       if (notificationQueue[userId].length <= MAX_NOTIFICATIONS_BEFORE_GROUP) {
         Notification.sendImmediateNotification(userId, notificationMessage);
       } else {
-        // Se atingir o limite, agrupar notificações
         if (notificationTimeouts[userId]) {
           clearTimeout(notificationTimeouts[userId]);
         }
   
-        // Configura o timer para enviar a notificação agrupada após um tempo
         notificationTimeouts[userId] = setTimeout(() => {
           Notification.sendGroupedNotification(userId, notificationQueue, notificationTimeouts);
         }, NOTIFICATION_DELAY);
@@ -65,7 +64,7 @@ export default {
       throw error;
     }
   },
-
+  
   // Função para obter todas as notificações por userId
   async getAllNotificationsByUserId(req, res) {
     try {
@@ -113,4 +112,35 @@ export default {
       throw error;
     }
   },
+
+  async cleanOldNotifications(userId) {
+    // Excluir notificações com mais de 3 meses
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  
+    await prisma.notification.deleteMany({
+      where: {
+        userId,
+        created_at: { lt: threeMonthsAgo },
+      },
+    });
+  
+    // Obter as notificações mais recentes para verificar o limite
+    const notifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { created_at: "desc" }, // Ordena pela mais recente
+      skip: 100, // Pula as 100 mais recentes
+    });
+  
+    // Obter IDs das notificações mais antigas para deletar
+    const idsToDelete = notifications.map(notification => notification.id);
+  
+    // Excluir as notificações mais antigas além das 100 mais recentes
+    if (idsToDelete.length > 0) {
+      await prisma.notification.deleteMany({
+        where: { id: { in: idsToDelete } },
+      });
+    }
+  }
+  
 };

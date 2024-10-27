@@ -4,7 +4,7 @@ import haversineDistance from 'haversine-distance' // Para calcular a distância
 
 export default {
   async createEvent(req, res) {
-    let event_id = 0;
+    let event_id = 0
     const {
       title,
       description,
@@ -17,67 +17,60 @@ export default {
       latitude,
       longitude
     } = req.body;
-
     try {
-      const eventData = {
-        title,
-        description,
-        event_date,
-        created_at,
-        user: {
-          connect: {
-            id: user_id,
-          },
-        },
-        privacy: {
-          connect: {
-            id: privacy_id,
-          },
-        },
-        eventCategory: {
-          connect: {
-            id: category_id,
-          },
-        },
-      };
-
-      // Condicional para criar o location apenas se latitude e longitude estiverem presentes
-      if (latitude && longitude) {
-        eventData.location = {
-          create: {
-            address: address || null, // O endereço é opcional
-            latitude: latitude,
-            longitude: longitude,
-          },
-        };
-      }
-
       const event = await prisma.event.create({
-        data: eventData,
+        data: {
+          title,
+          description,
+          event_date,
+          created_at,
+          user: {
+            connect: {
+              id: user_id,
+            },
+          },
+          privacy: {
+            connect: {
+              id: privacy_id,
+            },
+          },
+          eventCategory: {
+            connect: {
+              id: category_id,
+            },
+          },
+          location: {
+            create: {
+              address: address,
+              latitude: latitude,
+              longitude: longitude
+            },
+          }
+
+        },
       });
-
       res.json(event);
-      event_id = event.id;
-
+      event_id = event.id
     } catch (error) {
-      console.error("Erro ao criar evento", error);
-      res.status(500).json({ error: "Erro ao criar evento" });
+      console.error("Erro while creating event", error);
+      res.status(500).json({ error: "Erro while creating event" });
     }
-
     try {
+
+
       const participant = await prisma.eventParticipant.create({
         data: {
           event_id,
           user_id
         },
-      });
+      })
       console.log(participant);
     } catch (error) {
-      console.error("Erro ao criar participante", error);
-      res.status(500).json({ error: "Erro ao criar um novo participante" });
+      console.error("Erro while creating participant", error);
+      res.status(500).json({ error: "Erro while creating a new participant" });
+      
     }
-},
-
+  },
   async deleteEvent(req, res) {
     const { id } = req.params;
     const event_id = parseInt(id);
@@ -242,9 +235,6 @@ export default {
         where:{
           event_date: {
             gte: startOfDay
-          },
-          privacy: {
-            id: 3
           }
         }
 
@@ -371,14 +361,14 @@ export default {
 
   async findNearbyEvents(req, res) {
     try {
-      const { latitude, longitude } = req.query; // Pegar a latitude e longitude do usuário via query params
+      const { latitude, longitude, radius } = req.query; // Pegar a latitude e longitude do usuário via query params
       const userLocation = { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
     
       if (!latitude || !longitude) {
         return res.status(400).json({ error: "Latitude and Longitude are required" });
       }
   
-      const currentDate = new Date().toISOString(); // Data atual para comparação
+      const currentDate = new Date()// Data atual para comparação
   
       // Buscar todos os eventos com suas respectivas localizações e que possuem data futura
       const events = await prisma.event.findMany({
@@ -407,11 +397,12 @@ export default {
       });
     
       // Filtrar eventos que estão dentro de um raio de 30 km
+      console.log("events", events)
       const nearbyEvents = events.filter(event => {
         if (event.location) {
           const eventLocation = { latitude: event.location.latitude, longitude: event.location.longitude };
           const distance = haversineDistance(userLocation, eventLocation) / 1000; // Converte a distância para quilômetros
-          return distance <= 30;
+          return distance <= radius;
         }
         return false;
       });
