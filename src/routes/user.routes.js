@@ -15,6 +15,7 @@ userRoutes.get("/:id/followings", user.getFollowings)
 
 userRoutes.get("/:visitor_id/:user_id/following_status", user.getFollowingStatus)
 userRoutes.put("/:visitor_id/:user_id/unfollow", user.unfollow)
+userRoutes.put("/:visitor_id/:user_id/follow", user.follow)
 userRoutes.get("/username/:username", user.findUserByUsername)
 userRoutes.get("/email/:email", user.findUserByEmail)
 userRoutes.put("/:id", user.updateUser)

@@ -281,11 +281,11 @@ export default {
     try {
       const { visitor_id, user_id } = req.params;
       const check = await prisma.following.findUnique({
-        where: { follower_id_following_id:{follower_id:visitor_id, following_id:user_id} }
+        where: { follower_id_following_id: { follower_id: visitor_id, following_id: user_id } }
 
       });
       if (check) {
-        return res.json(true); 
+        return res.json(true);
       } else {
         return res.json(false);
       }
@@ -299,7 +299,7 @@ export default {
     try {
       const { id } = req.params;
       const following = await prisma.following.findMany({
-        where: { follower: {id: id} },
+        where: { follower: { id: id } },
         include: {
           following: {
             select: {
@@ -314,15 +314,74 @@ export default {
       return res.json({ error });
     }
   },
+  async follow(req, res) {
+    const { visitor_id, user_id } = req.params
+    try {
+      const exists = await prisma.following.findUnique({
+        where: { follower_id_following_id: { follower_id: visitor_id, following_id: user_id } }
+
+      });
+      if (exists) {
+        return res.json({ error: 'user already follows' });
+      } else {
+        const following = await prisma.following.create({
+          data: {
+            follower_id: visitor_id,
+            following_id: user_id
+          }
+        })
+        if (following) {
+          await prisma.user.update({
+            where: { id: user_id },
+            data: {
+              count_followers: {
+                increment: 1
+              }
+            }
+          });
+          await prisma.user.update({
+            where: { id: visitor_id },
+            data: {
+              count_following: {
+                increment: 1
+              }
+            }
+          });
+          return res.json(true);
+        }
+      }
+    } catch (error) {
+      return res.json({ error: 'error while following user' });
+    }
+  },
+
   async unfollow(req, res) {
-    const {visitor_id, user_id} = req.params
+    const { visitor_id, user_id } = req.params
     try {
       const following = await prisma.following.findUnique({
-        where: { follower_id_following_id:{follower_id:visitor_id, following_id:user_id} }
+        where: { follower_id_following_id: { follower_id: visitor_id, following_id: user_id } }
 
       });
       if (following) {
-        await prisma.following.delete({where:{id: following.id}})
+        const deleted = await prisma.following.delete({ where: { id: following.id } })
+        if (deleted) {
+          await prisma.user.update({
+            where: { id: user_id },
+            data: {
+              count_followers: {
+                decrement: 1
+              }
+            }
+          });
+          await prisma.user.update({
+            where: { id: visitor_id },
+            data: {
+              count_following: {
+                decrement: 1
+              }
+            }
+          });
+        }
       }
       return res.json(true);
     } catch (error) {
