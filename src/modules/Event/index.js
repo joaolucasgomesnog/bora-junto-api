@@ -42,10 +42,10 @@ export default {
       };
   
       // Verifica se latitude e longitude são fornecidos
-      if (latitude && longitude) {
+      if (latitude && longitude) { //NAO EXCLUA ISSO, SENAO DA BUG NA HORA DE CRIAR EVENTO SEM LOCALIZAÇÃO
         eventData.location = {
           create: {
-            address: address,
+            address: address || null,
             latitude: latitude,
             longitude: longitude
           },
@@ -159,9 +159,9 @@ export default {
               id: category_id,
             },
           },
-          location: {
+          location: { //nao exclua isso
             create: {
-              address: address,
+              address: address || null,
               latitude: latitude,
               longitude: longitude
             },
@@ -242,6 +242,9 @@ export default {
         where:{
           event_date: {
             gte: startOfDay
+          },
+          privacy: {
+            id: 3
           }
         }
 
@@ -382,6 +385,9 @@ export default {
         where: {
           event_date: {
             gt: currentDate // Apenas eventos com data futura
+          },
+          privacy: {
+            id: 3
           }
         },
         include: {
