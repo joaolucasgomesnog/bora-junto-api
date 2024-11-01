@@ -217,25 +217,22 @@ export default {
 
   async filterAllUsers(req, res) {
     const { query } = req.query;
+  
     console.log("QUERY", query);
     try {
-      const users = await prisma.user.findMany({
-        where: {
-          username: {
-            contains: query,
-            mode: "insensitive",
-          },
-        },
-        include: {
-          user_category: true,
-        },
-      });
+      const users = await prisma.$queryRaw`
+        SELECT * FROM "user"
+        WHERE unaccent(LOWER("name")) LIKE unaccent(${`%${query.toLowerCase()}%`})
+        OR unaccent("username") LIKE unaccent(${`%${query}%`})
+      `;
       console.log("USER FILTERED", users);
       return res.json(users);
     } catch (error) {
-      return res.status(500).json({ error: error });
+      console.error("Error filtering users:", error);
+      return res.status(500).json({ error: "An error occurred while filtering users." });
     }
   },
+  
 
   async findUserById(req, res) {
     try {
